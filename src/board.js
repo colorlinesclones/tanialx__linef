@@ -9,14 +9,42 @@ export default class Board extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            squares: Array(this.w*this.h).fill(null),
+            squares: this.initArray(),
+            selected: null
         };
+    }
+
+    initArray() {
+        const sz = this.w * this.h
+        let arr = Array(sz).fill(null)
+        // Display some random value
+        arr[Math.floor(Math.random() * sz)] = 'X'
+        arr[Math.floor(Math.random() * sz)] = 'X'
+        arr[Math.floor(Math.random() * sz)] = 'X'
+        arr[Math.floor(Math.random() * sz)] = 'X'
+        arr[Math.floor(Math.random() * sz)] = 'X'
+        return arr
     }
 
     onSquareClicked(i) {
         const squares = this.state.squares.slice();
-        squares[i] = 'X';
-        this.setState({ squares: squares });
+        if (squares[i] === 'X') {
+            // Detect attempt to move item from this square to another square
+            this.setState({ selected: i });
+        } else if (this.state.selected) {
+            // A blank square has just been selected as a move-to destination
+            // Remove item from previous square saved in 'selected' state
+            // Add item to newly selected square
+            // Refresh board's state so that related items are re-rendered
+            squares[this.state.selected] = null
+            squares[i] = 'X'
+            this.setState({squares: squares, selected: null})
+        } else {
+            // A blank square has just been selected but no revious item selection 
+            // recorded in board's state
+            // Ignore this click event
+            this.setState({ selected: null });
+        }
     }
 
     renderSquare(i, j) {
