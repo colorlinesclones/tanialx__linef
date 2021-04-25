@@ -30,7 +30,7 @@ export default class Board extends React.Component {
             content.push(this.renderSquare(i, j))
         }
         return (
-            <div className="board-row">
+            <div className="board-row" key={`row_${i}`}>
                 {content}
             </div>
         )
