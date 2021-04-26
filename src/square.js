@@ -8,7 +8,7 @@ export default class Square extends React.Component {
         if (this.props.item === null && nextProps.item === null) return false
         // item -> item: compare all sub-properties (type and color) to see if it's the same item
         if (this.props.item !== null && nextProps.item !== null) {
-            return this.props.item.type != nextProps.item.type || this.props.item.color !== nextProps.item.color
+            return this.props.item.type !== nextProps.item.type || this.props.item.color !== nextProps.item.color
         }
         // item -> blank or blank -> item
         return true
