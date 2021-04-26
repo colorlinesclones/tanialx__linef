@@ -42,6 +42,33 @@ export default class Board extends React.Component {
         return arr
     }
 
+    randomFreeSquareIndex(no_of_random, squares, excludes) {
+        let free_square_index_arr = []
+
+        /**
+         * An array contains all blank square's index (no item)
+         * We will generate random positions to render related items based on this array
+         * so that all items are rendered in their own separate square
+         */
+        let fs = squares.reduce((acc, curr, index) => {
+            if (curr === null && !excludes.includes(index)) {
+                acc.push(index);
+            }
+            return acc;
+        }, []);
+        console.log(`Free squares fs: ${JSON.stringify(fs)}`)
+        for (let i = 0; i < no_of_random; i++) {
+
+            // 1. Pick a random index fs_idx of free squares ('fs')
+            // 2. fs[fs_idx] = corresponding index of 'squares' where there's no item occupied (value to return)
+            // 3. Remove element at index free_sqr_idx from free_squares (since it's no longer free)
+
+            const fs_idx = Math.floor(Math.random() * fs.length)
+            free_square_index_arr.push(fs.splice(fs_idx, 1)[0])
+        }
+        return free_square_index_arr
+    }
+
     onSquareClicked(i) {
         if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
             // Detect attempt to move item from this square to another square
@@ -49,6 +76,9 @@ export default class Board extends React.Component {
         } else if (this.selected != null) {
 
             const squares = this.state.squares.slice();
+
+            let random_free_square_index = null
+
             /** 
              * A blank square has just been selected as a move-to destination
              * Remove item from previous square saved in 'selected' state
@@ -63,7 +93,8 @@ export default class Board extends React.Component {
                  * before future item can acquire it
                  * Render future item at another random square as 'p' (present) item
                  */
-                squares[Math.floor(Math.random() * squares.length)] = {
+                random_free_square_index = this.randomFreeSquareIndex(2, squares, [i, this.selected])
+                squares[random_free_square_index.pop()] = {
                     type: 'p',
                     color: squares[i].color
                 }
@@ -76,9 +107,10 @@ export default class Board extends React.Component {
                         color: squares[f_idx].color
                     }
                 }
+                random_free_square_index = this.randomFreeSquareIndex(1, squares, [i, this.selected])
             }
             // Create a new 'f' (future) item (small item) at another random position
-            squares[Math.floor(Math.random() * squares.length)] = {
+            squares[random_free_square_index.pop()] = {
                 type: 'f',
                 color: this.colors[Math.floor(Math.random() * this.colors.length)]
             }
