@@ -6,7 +6,9 @@ export default class Square extends React.Component {
     render() {
         let itemOrBlank
         if (this.props.item != null) {
-            itemOrBlank = <Item x='22' y='22' color={this.props.item} r='15' />
+            itemOrBlank = <Item x='22' y='22'
+                color={this.props.item.color}
+                r={this.props.item.type === 'p' ? 15 : 5} />
         }
         return (
             <div className="square"
