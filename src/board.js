@@ -56,22 +56,31 @@ export default class Board extends React.Component {
              * Refresh board's state so that related items are re-rendered
              */
 
+            // Resolve 'f' item
             if (squares[i] && squares[i].type === 'f') {
                 /**
                  * This square is occupied by existing item due to user's move
                  * before future item can acquire it
-                 * Render future item at another random square as 'p' (present) item,
-                 * and render a new 'f' (future) item (small item) at another position
-                 * @todo ensure selected two squares are blank 
+                 * Render future item at another random square as 'p' (present) item
                  */
                 squares[Math.floor(Math.random() * squares.length)] = {
                     type: 'p',
                     color: squares[i].color
                 }
-                squares[Math.floor(Math.random() * squares.length)] = {
-                    type: 'f',
-                    color: this.colors[Math.floor(Math.random() * this.colors.length)]
+            } else {
+                /** No conflict related to 'f' item. Render full size */
+                const f_idx = squares.findIndex(f => f && f.type === 'f')
+                if (f_idx >= 0) {
+                    squares[f_idx] = {
+                        type: 'p',
+                        color: squares[f_idx].color
+                    }
                 }
+            }
+            // Create a new 'f' (future) item (small item) at another random position
+            squares[Math.floor(Math.random() * squares.length)] = {
+                type: 'f',
+                color: this.colors[Math.floor(Math.random() * this.colors.length)]
             }
             squares[i] = squares[this.selected]
             squares[this.selected] = null
