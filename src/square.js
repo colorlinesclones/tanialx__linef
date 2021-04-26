@@ -3,6 +3,10 @@ import Item from './item';
 
 export default class Square extends React.Component {
 
+    shouldComponentUpdate(nextProps) {
+        return this.props.item !== nextProps.item;
+    }
+
     render() {
         let itemOrBlank
         if (this.props.item != null) {

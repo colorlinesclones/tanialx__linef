@@ -10,9 +10,9 @@ export default class Board extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            squares: this.initArray(),
-            selected: null
+            squares: this.initArray()
         };
+        this.selected = null
     }
 
     initArray() {
@@ -43,12 +43,12 @@ export default class Board extends React.Component {
     }
 
     onSquareClicked(i) {
-        const squares = this.state.squares.slice();
-        if (squares[i] !== null && squares[i].type === 'p') {
+        if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
             // Detect attempt to move item from this square to another square
-            this.setState({ selected: i });
-        } else if (this.state.selected) {
+            this.selected = i
+        } else if (this.selected != null) {
 
+            const squares = this.state.squares.slice();
             /** 
              * A blank square has just been selected as a move-to destination
              * Remove item from previous square saved in 'selected' state
@@ -73,26 +73,27 @@ export default class Board extends React.Component {
                     color: this.colors[Math.floor(Math.random() * this.colors.length)]
                 }
             }
-            squares[i] = squares[this.state.selected]
-            squares[this.state.selected] = null
-            this.setState({ squares: squares, selected: null })
+            squares[i] = squares[this.selected]
+            squares[this.selected] = null
+            this.selected = null
+            this.setState({ squares: squares })
         } else {
             // A blank square has just been selected but no revious item selection 
             // recorded in board's state
             // Ignore this click event
-            this.setState({ selected: null });
+            this.selected = null
         }
     }
 
-    renderSquare(i, j) {
-        const idx = i * this.w + j
-        return <Square key={idx} item={this.state.squares[idx]} onClick={() => this.onSquareClicked(idx)} />;
+    renderSquare(idx) {
+        return <Square key={idx} identifier={idx} item={this.state.squares[idx]} onClick={() => this.onSquareClicked(idx)} />;
     }
 
     renderRow(i) {
         let content = []
         for (let j = 0; j < this.w; ++j) {
-            content.push(this.renderSquare(i, j))
+            const idx = i * this.w + j
+            content.push(this.renderSquare(idx))
         }
         return (
             <div className="board-row" key={`row_${i}`}>
