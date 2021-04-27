@@ -3,10 +3,6 @@ import Item from './item';
 
 export default class Square extends React.Component {
 
-    constructor(props) {
-        super(props)
-    }
-
     shouldComponentUpdate(nextProps) {
 		/** Status */
         if (this.props.isActivated !== nextProps.isActivated) {
@@ -30,7 +26,7 @@ export default class Square extends React.Component {
                 color={this.props.item.color}
                 r={this.props.item.type === 'p' ? 15 : 5} />
         }
-        const style = this.props.isActivated ? 'square squareActive' : 'square'
+        const style = this.props.isActivated ? 'square square-active' : 'square'
         return (
             <div className={style}
                 onClick={() => this.props.onClick()}>
