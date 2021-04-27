@@ -19,17 +19,18 @@ ol, ul {
 
 .square {
   background: #fff;
-  border: 1px solid #999;
+  border: 1px solid #cccccc;
   float: left;
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 34px;
   margin-right: -1px;
   margin-top: -1px;
   padding: 0;
   text-align: center;
   width: 44px;
   height: 44px;
+}
+
+.squareActive {
+  background: rgb(240, 240, 240);
 }
 
 .square:focus {

@@ -10,7 +10,8 @@ export default class Board extends React.Component {
         this.selected = null
         this.numberOfPreRenderedItemAtEachMove = 3
         this.state = {
-            squares: this.initArray()
+            squares: this.initArray(),
+            status: Array(this.props.w * this.props.h).fill('i')
         };
     }
 
@@ -72,9 +73,13 @@ export default class Board extends React.Component {
     }
 
     onSquareClicked(i) {
+        const status = this.state.status.slice();
         if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
             // Detect attempt to move item from this square to another square
             this.selected = i
+            status.fill('i')
+            status[i] = 'a'
+            this.setState({status: status})
         } else if (this.selected != null) {
 
             let random_free_square_index = null
@@ -145,12 +150,15 @@ export default class Board extends React.Component {
             for (const ri of resolved_idx) {
                 squares[ri] = null
             }
-            this.setState({ squares: squares })
+            status.fill('i')
+            this.setState({ squares: squares, status: status})
         } else {
             // A blank square has just been selected but no revious item selection 
             // recorded in board's state
             // Ignore this click event
             this.selected = null
+            status.fill('i')
+            this.setState({status: status})
         }
     }
 
@@ -274,7 +282,10 @@ export default class Board extends React.Component {
     }
 
     renderSquare(idx) {
-        return <Square key={idx} identifier={idx} item={this.state.squares[idx]} onClick={() => this.onSquareClicked(idx)} />;
+        return <Square key={idx}
+            item={this.state.squares[idx]}
+            status={this.state.status[idx]}
+            onClick={() => this.onSquareClicked(idx)} />;
     }
 
     renderRows() {
@@ -287,7 +298,7 @@ export default class Board extends React.Component {
 
     render() {
         return (
-            <div class='grid'>
+            <div className='grid'>
                 {this.renderRows()}
             </div>
         );
