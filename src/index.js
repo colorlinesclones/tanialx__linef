@@ -5,15 +5,28 @@ import Board from './board.js'
 import Score from './score';
 
 class Game extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.state = {
+            score: 0
+        }
+        this.increaseScore = this.increaseScore.bind(this)
+    }
+
+    increaseScore(incr) {
+        this.setState({ score: this.state.score + incr })
+    }
+
     render() {
         return (
             <div className="game">
                 <div>
                     <div className="score-board">
                         <span>Score: </span>
-                        <Score score="0" />
+                        <Score score={this.state.score} />
                     </div>
-                    <Board w='9' h='9' />
+                    <Board w='9' h='9'  score_incr={this.increaseScore} />
                 </div>
             </div>
         );
