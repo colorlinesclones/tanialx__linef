@@ -6,7 +6,7 @@ export default class Board extends React.Component {
 
     constructor(props) {
         super(props);
-        this.colors = ['#FAA0A0', '#FAC898', '#FFFAA0', '#C1E1C1', '#A7C7E7', '#C3B1E1', '#F8C8DC', '#AC9D8E']
+        this.colors = ['#FF9494', '#FFD08B', '#E2E68C', '#A8F0D4', '#9DE2FE', '#C5B8F0', '#FBD8FF']
         this.selected = null
         this.numberOfPreRenderedItemAtEachMove = 3
         this.state = {
