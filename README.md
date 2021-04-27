@@ -1,6 +1,6 @@
 # linef
 
-![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE.md)
 ![stability-wip](https://img.shields.io/badge/stability-wip-yellow.svg?style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/tanialx/linef?color=blue&style=flat-square)
 
