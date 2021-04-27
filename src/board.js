@@ -145,6 +145,10 @@ export default class Board extends React.Component {
                 squares[ri] = null
             }
             this.setState({ squares: squares, selected: null })
+            // Update score
+            if (resolved_idx.length > 0) {
+                this.props.score_incr(resolved_idx.length)
+            }
         } else {
             // A blank square has just been selected but no revious item selection 
             // recorded in board's state
