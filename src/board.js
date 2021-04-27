@@ -7,11 +7,10 @@ export default class Board extends React.Component {
     constructor(props) {
         super(props);
         this.colors = ['#FF9494', '#FFD08B', '#E2E68C', '#A8F0D4', '#9DE2FE', '#C5B8F0', '#FBD8FF']
-        this.selected = null
         this.numberOfPreRenderedItemAtEachMove = 3
         this.state = {
             squares: this.initArray(),
-            status: Array(this.props.w * this.props.h).fill('i')
+            selected: null
         };
     }
 
@@ -73,14 +72,10 @@ export default class Board extends React.Component {
     }
 
     onSquareClicked(i) {
-        const status = this.state.status.slice();
         if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
-            // Detect attempt to move item from this square to another square
-            this.selected = i
-            status.fill('i')
-            status[i] = 'a'
-            this.setState({status: status})
-        } else if (this.selected != null) {
+            // Detect attempt to move item from this square to another square        
+            this.setState({ selected: i })
+        } else if (this.state.selected != null) {
 
             let random_free_square_index = null
             let idx_of_f_items = this.fItems()
@@ -109,7 +104,7 @@ export default class Board extends React.Component {
                  * before future item can acquire it
                  * Render future item at another random square as 'p' (present) item
                  */
-                random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove + 1, squares, [i, this.selected])
+                random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove + 1, squares, [i, this.state.selected])
                 const switch_to_idx = random_free_square_index.pop()
                 squares[switch_to_idx] = {
                     type: 'p',
@@ -121,7 +116,7 @@ export default class Board extends React.Component {
                 // remove this index from 'idx_of_f_items' array
                 idx_of_f_items.splice(idx_of_f_items.indexOf(i), 1)
             } else {
-                random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove, squares, [i, this.selected])
+                random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove, squares, [i, this.state.selected])
             }
             /** For all other f-items with no conflict, render full-size */
             idx_of_f_items.forEach(idx => {
@@ -141,24 +136,20 @@ export default class Board extends React.Component {
                 }
             }
             squares[i] = {
-                type: squares[this.selected].type,
-                color: squares[this.selected].color
+                type: squares[this.state.selected].type,
+                color: squares[this.state.selected].color
             }
-            squares[this.selected] = null
-            this.selected = null
+            squares[this.state.selected] = null
             const resolved_idx = this.checkResolved(squares, active_idx_arr)
             for (const ri of resolved_idx) {
                 squares[ri] = null
             }
-            status.fill('i')
-            this.setState({ squares: squares, status: status})
+            this.setState({ squares: squares, selected: null })
         } else {
             // A blank square has just been selected but no revious item selection 
             // recorded in board's state
             // Ignore this click event
-            this.selected = null
-            status.fill('i')
-            this.setState({status: status})
+            this.setState({ selected: null })
         }
     }
 
@@ -284,8 +275,8 @@ export default class Board extends React.Component {
     renderSquare(idx) {
         return <Square key={idx}
             item={this.state.squares[idx]}
-            status={this.state.status[idx]}
-            onClick={() => this.onSquareClicked(idx)} />;
+            onClick={() => this.onSquareClicked(idx)}
+            isActivated={this.state.selected === idx} />;
     }
 
     renderRows() {
