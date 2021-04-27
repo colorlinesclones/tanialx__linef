@@ -3,7 +3,7 @@ body {
   margin: 20px;
 }
 
-.grid {
+.game-board {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   grid-template-rows: repeat(9, 45px);
@@ -33,4 +33,9 @@ body {
 .game {
   display: flex;
   flex-direction: row;
+}
+
+.score-board {
+  display: inline-block;
+  margin-bottom: 10px;
 }

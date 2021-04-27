@@ -289,7 +289,7 @@ export default class Board extends React.Component {
 
     render() {
         return (
-            <div className='grid'>
+            <div className='game-board'>
                 {this.renderRows()}
             </div>
         );
