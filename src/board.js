@@ -221,6 +221,53 @@ export default class Board extends React.Component {
             /**
              * Check diagonal line 
              */
+            {
+                /*  DIRECTION: \ */
+                {
+                    // count forward
+                    let countForward = []
+                    for (let incr = i + w + 1; incr < curr_squares.length && curr_squares[incr]
+                        && curr_squares[incr].type === base_type
+                        && curr_squares[incr].color === base_color; incr += (w + 1)) {
+                        countForward.push(incr)
+                    }
+                    // count backward
+                    let countBackward = []
+                    for (let decr = i - w - 1; decr >= 0 && curr_squares[decr]
+                        && curr_squares[decr].type === base_type
+                        && curr_squares[decr].color === base_color; decr -= (w + 1)) {
+                        countBackward.push(decr)
+                    }
+                    // total:
+                    const count = countBackward.length + countForward.length + 1
+                    if (count >= 5) {
+                        resolved = [i].concat(countForward, countBackward)
+                    }
+                }
+
+                /*  DIRECTION: / */
+                {
+                    // count forward
+                    let countForward = []
+                    for (let incr = i + w - 1; incr < curr_squares.length && curr_squares[incr]
+                        && curr_squares[incr].type === base_type
+                        && curr_squares[incr].color === base_color; incr += (w - 1)) {
+                        countForward.push(incr)
+                    }
+                    // count backward
+                    let countBackward = []
+                    for (let decr = i - w + 1; decr >= 0 && curr_squares[decr]
+                        && curr_squares[decr].type === base_type
+                        && curr_squares[decr].color === base_color; decr -= (w - 1)) {
+                        countBackward.push(decr)
+                    }
+                    // total:
+                    const count = countBackward.length + countForward.length + 1
+                    if (count >= 5) {
+                        resolved = [i].concat(countForward, countBackward)
+                    }
+                }
+            }
         })
         return resolved
     }
