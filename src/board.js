@@ -4,42 +4,44 @@ import Square from './square.js';
 
 export default class Board extends React.Component {
 
-    w = 9; h = 9
-    colors = ['#98ddca', '#d5ecc2', '#ffd3b4', '#ffaaa7']
-
     constructor(props) {
         super(props);
+        this.colors = ['#98ddca', '#d5ecc2', '#ffd3b4', '#ffaaa7']
+        this.selected = null
+        this.numberOfPreRenderedItemAtEachMove = 3
         this.state = {
             squares: this.initArray()
         };
-        this.selected = null
     }
 
     initArray() {
-        const sz = this.w * this.h
-        let arr = Array(sz).fill(null)
-        // Display some random value
-        arr[Math.floor(Math.random() * sz)] = {
-            type: 'p',
-            color: this.colors[Math.floor(Math.random() * this.colors.length)]
-        }
-        arr[Math.floor(Math.random() * sz)] = {
-            type: 'p',
-            color: this.colors[Math.floor(Math.random() * this.colors.length)]
-        }
-        arr[Math.floor(Math.random() * sz)] = {
-            type: 'p',
-            color: this.colors[Math.floor(Math.random() * this.colors.length)]
-        }
-        arr[Math.floor(Math.random() * sz)] = {
-            type: 'p',
-            color: this.colors[Math.floor(Math.random() * this.colors.length)]
-        }
-        arr[Math.floor(Math.random() * sz)] = {
-            type: 'f',
-            color: this.colors[Math.floor(Math.random() * this.colors.length)]
+        let arr = Array(this.props.w * this.props.h).fill(null)
+        const noRandomP = 5;
+        const noRandomF = this.numberOfPreRenderedItemAtEachMove;
+        let freeSquareIdxArr = this.randomFreeSquareIndex(noRandomP + noRandomF, arr, [])
+        for (let i = 0; i < noRandomP; i++) {
+            arr[freeSquareIdxArr.pop()] = {
+                type: 'p',
+                color: this.colors[Math.floor(Math.random() * this.colors.length)]
+            }
+        } for (let i = 0; i < noRandomF; i++) {
+            arr[freeSquareIdxArr.pop()] = {
+                type: 'f',
+                color: this.colors[Math.floor(Math.random() * this.colors.length)]
+            }
         }
         return arr
+    }
+
+    fItems() {
+        var indexes = [], i;
+        const sq = this.state.squares;
+        for (i = 0; i < sq.length; i++) {
+            if (sq[i] && sq[i].type === 'f') {
+                indexes.push(i);
+            }
+        }
+        return indexes;
     }
 
     randomFreeSquareIndex(no_of_random, squares, excludes) {
@@ -75,9 +77,9 @@ export default class Board extends React.Component {
             this.selected = i
         } else if (this.selected != null) {
 
-            const squares = this.state.squares.slice();
-
             let random_free_square_index = null
+            let idx_of_f_items = this.fItems()
+            const squares = this.state.squares.slice();
 
             /** 
              * A blank square has just been selected as a move-to destination
@@ -93,26 +95,30 @@ export default class Board extends React.Component {
                  * before future item can acquire it
                  * Render future item at another random square as 'p' (present) item
                  */
-                random_free_square_index = this.randomFreeSquareIndex(2, squares, [i, this.selected])
+                random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove + 1, squares, [i, this.selected])
                 squares[random_free_square_index.pop()] = {
                     type: 'p',
                     color: squares[i].color
                 }
+                // remove this index from 'idx_of_f_items' array
+                idx_of_f_items.splice(idx_of_f_items.indexOf(i), 1)
             } else {
-                /** No conflict related to 'f' item. Render full size */
-                const f_idx = squares.findIndex(f => f && f.type === 'f')
-                if (f_idx >= 0) {
-                    squares[f_idx] = {
-                        type: 'p',
-                        color: squares[f_idx].color
-                    }
-                }
-                random_free_square_index = this.randomFreeSquareIndex(1, squares, [i, this.selected])
+                random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove, squares, [i, this.selected])
             }
+            /** For all other f-items with no conflict, render full-size */
+            idx_of_f_items.forEach(idx => {
+                squares[idx] = {
+                    type: 'p',
+                    color: squares[idx].color
+                }
+            })
+
             // Create a new 'f' (future) item (small item) at another random position
-            squares[random_free_square_index.pop()] = {
-                type: 'f',
-                color: this.colors[Math.floor(Math.random() * this.colors.length)]
+            for (let i = 0; i < this.numberOfPreRenderedItemAtEachMove; i++) {
+                squares[random_free_square_index.pop()] = {
+                    type: 'f',
+                    color: this.colors[Math.floor(Math.random() * this.colors.length)]
+                }
             }
             squares[i] = squares[this.selected]
             squares[this.selected] = null
@@ -132,8 +138,8 @@ export default class Board extends React.Component {
 
     renderRow(i) {
         let content = []
-        for (let j = 0; j < this.w; ++j) {
-            const idx = i * this.w + j
+        for (let j = 0; j < this.props.w; ++j) {
+            const idx = i * this.props.w + j
             content.push(this.renderSquare(idx))
         }
         return (
@@ -145,7 +151,7 @@ export default class Board extends React.Component {
 
     renderRows() {
         let content = [];
-        for (let i = 0; i < this.h; i++) {
+        for (let i = 0; i < this.props.h; i++) {
             content.push(this.renderRow(i));
         }
         return content
