@@ -58,7 +58,7 @@ export default class Board extends React.Component {
             }
             return acc;
         }, []);
-        console.log(`Free squares fs: ${JSON.stringify(fs)}`)
+        
         for (let i = 0; i < no_of_random; i++) {
 
             // 1. Pick a random index fs_idx of free squares ('fs')
