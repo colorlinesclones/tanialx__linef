@@ -88,7 +88,7 @@ export default class Board extends React.Component {
              * Refresh board's state so that related items are re-rendered
              */
 
-            // Resolve 'f' item
+            // Resolve 'f' items
             if (squares[i] && squares[i].type === 'f') {
                 /**
                  * This square is occupied by existing item due to user's move
@@ -113,7 +113,7 @@ export default class Board extends React.Component {
                 }
             })
 
-            // Create a new 'f' (future) item (small item) at another random position
+            // Create new 'f' (future) items (small items) at some random positions
             for (let i = 0; i < this.numberOfPreRenderedItemAtEachMove; i++) {
                 squares[random_free_square_index.pop()] = {
                     type: 'f',
