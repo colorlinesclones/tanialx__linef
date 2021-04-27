@@ -5,7 +5,7 @@ import Square from './square.js';
 export default class Board extends React.Component {
 
     w = 9; h = 9
-    colors = ['#98ddca', '#d5ecc2', '#ffd3b4', '#ffaaa7']
+    colors = ['#FAA0A0', '#FAC898', '#FFFAA0', '#C1E1C1', '#A7C7E7', '#C3B1E1', '#F8C8DC', '#AC9D8E']
 
     constructor(props) {
         super(props);
