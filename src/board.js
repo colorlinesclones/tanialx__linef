@@ -79,6 +79,15 @@ export default class Board extends React.Component {
 
             let random_free_square_index = null
             let idx_of_f_items = this.fItems()
+
+            /*
+             * Save index of all actively changed square in 'active_idx_arr' variable
+             * so that we can check if any set of items is resolved later on
+             * (match-5)
+             * Only save those contain 'p' items as 'f' items should not result in any match-5
+             */
+            let active_idx_arr = [i]
+
             const squares = this.state.squares.slice();
 
             /** 
@@ -96,10 +105,14 @@ export default class Board extends React.Component {
                  * Render future item at another random square as 'p' (present) item
                  */
                 random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove + 1, squares, [i, this.selected])
-                squares[random_free_square_index.pop()] = {
+                const switch_to_idx = random_free_square_index.pop()
+                squares[switch_to_idx] = {
                     type: 'p',
                     color: squares[i].color
                 }
+                // f -> p: add ref to active_idx_arr
+                active_idx_arr.push(switch_to_idx)
+
                 // remove this index from 'idx_of_f_items' array
                 idx_of_f_items.splice(idx_of_f_items.indexOf(i), 1)
             } else {
@@ -111,6 +124,8 @@ export default class Board extends React.Component {
                     type: 'p',
                     color: squares[idx].color
                 }
+                // f -> p: add ref to active_idx_arr
+                active_idx_arr.push(idx)
             })
 
             // Create new 'f' (future) items (small items) at some random positions
@@ -120,9 +135,16 @@ export default class Board extends React.Component {
                     color: this.colors[Math.floor(Math.random() * this.colors.length)]
                 }
             }
-            squares[i] = squares[this.selected]
+            squares[i] = {
+                type: squares[this.selected].type,
+                color: squares[this.selected].color
+            }
             squares[this.selected] = null
             this.selected = null
+            const resolved_idx = this.checkResolved(squares, active_idx_arr)
+            for (const ri of resolved_idx) {
+                squares[ri] = null
+            }
             this.setState({ squares: squares })
         } else {
             // A blank square has just been selected but no revious item selection 
@@ -130,6 +152,77 @@ export default class Board extends React.Component {
             // Ignore this click event
             this.selected = null
         }
+    }
+
+    checkResolved(curr_squares, active_idx_arr) {
+        let resolved = []
+        const w = parseInt(this.props.w)
+        const h = parseInt(this.props.h)
+
+        active_idx_arr.forEach(i => {
+
+            const base_type = curr_squares[i].type
+            const base_color = curr_squares[i].color
+
+            /**
+             * Check horizontal line [ i % w == 0 ] [ i % w == 1 ] ... [ i % w == w-1 ]
+             */
+            {
+                const line_wrap_start = Math.floor(i / h) * w
+                const line_wrap_end = line_wrap_start + w
+                // count forward
+                let countForward = []
+                for (let incr = i + 1; incr < line_wrap_end && curr_squares[incr]
+                    && curr_squares[incr].type === base_type
+                    && curr_squares[incr].color === base_color; incr++) {
+                    countForward.push(incr)
+                }
+                // count backward
+                let countBackward = []
+                for (let decr = i - 1; decr >= line_wrap_start && curr_squares[decr]
+                    && curr_squares[decr].type === base_type
+                    && curr_squares[decr].color === base_color; decr--) {
+                    countBackward.push(decr)
+                }
+                // total:
+                const count = countBackward.length + countForward.length + 1
+                if (count >= 5) {
+                    resolved = [i].concat(countForward, countBackward)
+                }
+            }
+            /**
+             * Check vertical line
+             * [ i - w]
+             * [ i ]
+             * [ i + w]
+             */
+            {
+                // count forward
+                let countForward = []
+                for (let incr = i + w; incr < curr_squares.length && curr_squares[incr]
+                    && curr_squares[incr].type === base_type
+                    && curr_squares[incr].color === base_color; incr += w) {
+                    countForward.push(incr)
+                }
+                // count backward
+                let countBackward = []
+                for (let decr = i - w; decr >= 0 && curr_squares[decr]
+                    && curr_squares[decr].type === base_type
+                    && curr_squares[decr].color === base_color; decr -= w) {
+                    countBackward.push(decr)
+                }
+                // total:
+                const count = countBackward.length + countForward.length + 1
+                if (count >= 5) {
+                    resolved = [i].concat(countForward, countBackward)
+                }
+            }
+
+            /**
+             * Check diagonal line 
+             */
+        })
+        return resolved
     }
 
     renderSquare(idx) {
