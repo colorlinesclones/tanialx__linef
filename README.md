@@ -1,8 +1,9 @@
 # linef
+![stability-wip](https://img.shields.io/badge/stability-wip-yellow.svg?style=flat-square)
 
-![GitHub repo size](https://img.shields.io/github/repo-size/tanialx/linef?color=green&style=flat-square)
-![GitHub language count](https://img.shields.io/github/languages/count/tanialx/linef?color=green&style=flat-square)
-![GitHub top language](https://img.shields.io/github/languages/top/tanialx/linef?color=green&style=flat-square)
+![GitHub repo size](https://img.shields.io/github/repo-size/tanialx/linef?color=lightgrey&style=flat-square)
+![GitHub language count](https://img.shields.io/github/languages/count/tanialx/linef?color=lightgrey&style=flat-square)
+![GitHub top language](https://img.shields.io/github/languages/top/tanialx/linef?color=lightgrey&style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/tanialx/linef?color=blue&style=flat-square)
 
 A remake of classic line-98 (color lines), a popular game in late 90s and early 00s
