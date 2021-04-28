@@ -81,6 +81,44 @@ export default class Board extends React.Component {
         }
     }
 
+    indexNotOccupied(idx) {
+        return this.state.squares[idx] === null || this.state.squares[idx].type === 'f'
+    }
+
+    scanNextLevel(scanner) {
+        let nextLevelNeighbors = []
+        for (const idx of scanner.newly_added) {
+            const from = scanner.reachable_index.indexOf(idx)
+
+            // 1. Find all squares reachable from the current position
+            let neighbor_movable = [] // array contains all neighbor squares reachable from current position
+
+
+            const check_idx_u = idx - this.w
+            const check_idx_l = idx - 1
+            const check_idx_r = idx + 1
+            const check_idx_d = idx + this.w
+
+            // Check for boundaries:
+            let valid_check_idx = []
+            const line_wrap = this.lineWrapOfIndex(idx) // line boundaries
+            if (check_idx_u >= 0) valid_check_idx.push(check_idx_u)
+            if (check_idx_l >= line_wrap.start) valid_check_idx.push(check_idx_l)
+            if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
+            if (check_idx_d < this.w * this.h) valid_check_idx.push(check_idx_d)
+
+            neighbor_movable = valid_check_idx.filter(v_idx => this.indexNotOccupied(v_idx) && !scanner.reachable_index.includes(v_idx))
+
+            for (const n of neighbor_movable) {
+                scanner.reachable_index.push(n)
+                scanner.reachable_from.push(from)
+            }
+            nextLevelNeighbors = nextLevelNeighbors.concat(neighbor_movable)
+        }
+        scanner.newly_added = nextLevelNeighbors
+        return scanner
+    }
+
     /**
      * check if there's a clear path for item to move from
      * one square to another
@@ -103,82 +141,122 @@ export default class Board extends React.Component {
          * 
          */
 
-        const sq = this.state.squares
-        const max_idx = sq.length
-        const w = this.w
+        /*
+         * Use fScanner & bScanner to store index of squares reachable from 'from-idx' and 'to-idx'
+         * 
+         * - reachable_index: index of squares reachable from the original position
+         * - reachable_from: map 1:1 to reachable_index to keep track of route history
+         *                   (we go to reachable_index[i] from reachable_index[reachable_from[i]])
+         * - newly_added: all new reachable idx we have added in the current iteration
+         *                (their neighbors are not yet added to our main list reachable_index
+         *                and should be processed in the next iteration)
+         * 
+         * During each iteration
+         * 1. Collect next-level reachable squares of both from_idx and to_idx into fScanner and bScanner
+         * 2. Check for a common index between two scanners. 
+         *    If yes, that means our two scanners have encounter each other half-way. From that common index, 
+         *    trace back to construct the route
+         */
 
-        const indexNotOccupied = idx => sq[idx] === null || sq[idx].type === 'f'
-
-        let scanner_forward = {
-            reachable_index: [],
-            reachable_from: [],
+        let fScanner = {
+            reachable_index: [from_idx],
+            reachable_from: [from_idx],
             newly_added: [from_idx]
-
         }
-        let scanner_backward = {
-            reachable_index: [],
-            reachable_from: [],
+        let bScanner = {
+            reachable_index: [to_idx],
+            reachable_from: [to_idx],
             newly_added: [to_idx]
         }
 
-        const scanNextLevel = (scanner) => {
-            let scanner = []
-            for (idx of scanner.newly_added) {
-
-                // 1. Find all squares reachable from the current position
-                let neighbor_movable = [] // array contains all neighbor squares reachable from current position
-
-                // line boundaries
-                const line_wrap = this.lineWrapOfIndex(idx)
-
-                const check_idx_u = current_try_postion - w
-                const check_idx_l = current_try_postion - 1
-                const check_idx_r = current_try_postion + 1
-                const check_idx_d = current_try_postion + w
-
-                let valid_check_idx = []
-
-                if (check_idx_u >= 0) valid_check_idx.push(check_idx_u)
-                if (check_idx_l >= line_wrap.start) valid_check_idx.push(check_idx_l)
-                if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
-                if (check_idx_d < max_idx) valid_check_idx.push(check_idx_d)
-
-                for (const v_idx of valid_check_idx) {
-                    if (indexNotOccupied(v_idx) && !scanner.reachable_index.includes(v_idx)) {
-                        neighbor_movable.push(v_idx)
-                    }
+        /**
+         * Find common value in reachable_index array of two input scanners
+         * @param {*} fScanner 
+         * @param {*} bScanner 
+         * @returns the value found
+         */
+        const findCommonIndex = (fScanner, bScanner) => {
+            for (const idx of fScanner.reachable_index) {
+                if (bScanner.reachable_index.includes(idx)) {
+                    return idx
                 }
-                for (n of neighbor_movable) {
-                    scanner.reachable_index.push(n)
-                    scanner.reachable_from.push(idx)
-                }
-                scanner.concat(neighbor_movable)
             }
-            scanner.newly_added = forward_new
-            return scanner
+            return -1
+        }
+        /**
+         * Construct the route to go from original index to the input index
+         * @param {*} scanner 
+         * @param {*} idx 
+         * @returns route[ ]
+         */
+        const traceBackRoute = (scanner, idx) => {
+            let route = []
+            let curr = scanner.reachable_index.indexOf(idx)
+            while (curr !== 0) {
+                const cameFrom = scanner.reachable_from[curr]
+                route.push(scanner.reachable_from[cameFrom])
+                curr = cameFrom
+            }
+            return route
+        }
+        /**
+         * Construct the route to go from original index of a scanner to the original index of
+         * another scanner based on their common index value
+         * @param {*} fScanner 
+         * @param {*} bScanner 
+         * @param {*} c_idx 
+         * @returns route[ ]
+         */
+        const constructRouteFromCommonIndex = (fScanner, bScanner, c_idx) => {
+            let route = traceBackRoute(fScanner, c_idx)
+            route.reverse()
+            route.push(c_idx)
+            route.concat(traceBackRoute(bScanner, c_idx))
+            return route
         }
 
         let scanNext = true
         let isFound = false
-        while (scanNext) {
+        let route = []
 
-            scanner_forward = scanNextLevel(scanner_forward)
-            if (scanner_forward.reachable_index.includes(to_idx)) {
+        while (scanNext) {
+            // 1. Collect next-level reachable squares
+            fScanner = this.scanNextLevel(fScanner)
+            if (fScanner.newly_added.length === 0) {
+                /*
+                 * fScanner already includes all reachable squares from 'from_idx'
+                 * if 'to_idx' can be reached from 'from_idx', it should have been
+                 * resolved in the previous iteration
+                 */
+                scanNext = false
+                isFound = false
+                break
+            }
+
+            bScanner = this.scanNextLevel(bScanner)
+            if (bScanner.newly_added.length === 0) {
+                /*
+                 * bScanner already includes all reachable squares from 'to_idx'
+                 * if 'from_idx' can be reached from 'to_idx', it should have been
+                 * resolved in the previous iteration
+                 */
+                scanNext = false
+                isFound = false
+                break
+            }
+
+            // 2. Check for a common index
+            const cIdx = findCommonIndex(fScanner, bScanner)
+            if (cIdx >= 0) {
+                route = constructRouteFromCommonIndex(fScanner, bScanner, cIdx)
                 isFound = true
                 scanNext = false
             }
-
-            scanner_backward = scanNextLevel(scanner_backward)
-
-            // Check if there's a common reachable index between forward and backward scan
-            // That means our two scanners have encounter each other half-way
-            // From that common index, trace back to construct the route
-            
-
         }
 
         return {
-            found: false
+            found: isFound,
+            route: route
         }
     }
 
