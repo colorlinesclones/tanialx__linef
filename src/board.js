@@ -109,112 +109,27 @@ export default class Board extends React.Component {
 
         const indexNotOccupied = idx => sq[idx] === null || sq[idx].type === 'f'
 
-        /*
-         * - try_route: current route (stack of index) we are checking
-         * - current_try_postion: current index we are chechking
-         * - valid_mvs: save all possible routes that we have not yet checked so that
-         *              we can come back later to check for another route in case the
-         *              current route fails
-         * - retry_other_route: signal that to_idx cannot be reached from the route we're currenty trying
-         * - try_next: signal that we should continue try/retry with next interations as there are
-         *             still possibilities of a clear path found
-         * - isFound: information of our result
-         * - failed_idx: keep track of failed check: there's no path to to_idx from these, so that
-         *               we don't need to same index over and over again in the next iterations
-         */
-        let current_try_postion = from_idx
-        let try_route = [from_idx]
-        let valid_mvs = {}
-        let retry_other_route = false;
-        let try_next = true
-        let isFound = false
-        let failed_idx = []
+        let scanner_forward = {
+            reachable_index: [],
+            reachable_from: [],
+            newly_added: [from_idx]
 
-        /**
-         * check if this index should be excluded from recursively checking
-         * to prevent forming a cycle
-         * either 
-         * - it is in the fail-list ('failed_idx') that we already checked, or
-         * - it is included in try_route (that means we have travelled through this idx at some previous iteration)
-         * @param {*} idx index to check
-         * @returns 
-         */
-        const exclude = idx => try_route.includes(idx) || failed_idx.includes(idx)
-
-        /**
-         * (column, row) representation of square array index
-         * @param {*} idx input index
-         * @returns (x, y) = (col_idx, row_idx)
-         */
-        const x_y = idx => {
-            return {
-                x: idx % w,
-                y: Math.floor(idx / w)
-            }
         }
-        /**
-         * distance between two (x, y) pairs
-         * @param {*} p1 
-         * @param {*} p2 
-         * @returns 
-         */
-        const d_sq = (p1, p2) => {
-            const dx = p1.x - p2.x
-            const dy = p1.y - p2.y
-            return dx * dx + dy * dy
+        let scanner_backward = {
+            reachable_index: [],
+            reachable_from: [],
+            newly_added: [to_idx]
         }
 
-        while (try_next) {
-
-            if (retry_other_route) {
-                /**
-                 * there's no way to reach to to_idx using the current route, we have to
-                 * come back to previous check-point and retry for another route
-                 */
-
-                // mark current position index as 'failed'
-                const try_fail = try_route.pop()                
-                failed_idx.push(try_fail)
-
-                // also remove the failed index from our possible-route storage
-                // to reduce number of interations
-                for (const props in valid_mvs) {
-                    if (valid_mvs[props].includes(try_fail)) {
-                        valid_mvs[props].splice(valid_mvs[props].indexOf(try_fail), 1)
-                    }
-                }
-                
-                if (try_route.length === 0) {
-                    // all routes tried but no path found
-                    try_next = false
-                    isFound = false
-                } else {
-                    // return to a previous check-point
-                    const previous_checkpoint = try_route[try_route.length - 1]
-
-                    // retrieve all reachable neighbors of 'curr_from' that we previously store in 'valid_vms'
-                    let neighbors = valid_mvs[previous_checkpoint]
-                    if (!neighbors || neighbors.length === 0) {
-                        // all neighbors have been tried and no success
-                        retry_other_route = true
-                    } else {
-                        // Set up our new current-postion
-                        current_try_postion = neighbors.pop()
-                        try_route.push(current_try_postion)
-                        retry_other_route = false
-                    }
-                }
-            } else {
-                /*
-                 * Continue with the current route as there's no conflict yet
-                 */
-
-                // line boundaries
-                const line_wrap = this.lineWrapOfIndex(current_try_postion)
+        const scanNextLevel = (scanner) => {
+            let scanner = []
+            for (idx of scanner.newly_added) {
 
                 // 1. Find all squares reachable from the current position
-
                 let neighbor_movable = [] // array contains all neighbor squares reachable from current position
+
+                // line boundaries
+                const line_wrap = this.lineWrapOfIndex(idx)
 
                 const check_idx_u = current_try_postion - w
                 const check_idx_l = current_try_postion - 1
@@ -222,60 +137,48 @@ export default class Board extends React.Component {
                 const check_idx_d = current_try_postion + w
 
                 let valid_check_idx = []
+
                 if (check_idx_u >= 0) valid_check_idx.push(check_idx_u)
                 if (check_idx_l >= line_wrap.start) valid_check_idx.push(check_idx_l)
                 if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
                 if (check_idx_d < max_idx) valid_check_idx.push(check_idx_d)
 
-                // destination is reached, no need further checking
-                if (valid_check_idx.includes(to_idx)) {
-                    try_next = false
-                    isFound = true
-                    try_route.push(to_idx)
-                    break
-                }
-
                 for (const v_idx of valid_check_idx) {
-                    if (indexNotOccupied(v_idx) && !exclude(v_idx)) {
+                    if (indexNotOccupied(v_idx) && !scanner.reachable_index.includes(v_idx)) {
                         neighbor_movable.push(v_idx)
                     }
                 }
-
-                /*
-                 * try to order reachable neighbors based on distance to destination index
-                 * ex:
-                 * if destination is located in a row above the current position and to the right,
-                 * check for neighbor-square-above and neighbor-square-right
-                 * before those in the left and bottom
-                 */
-
-                const x_y_of_toIdx = x_y(to_idx)
-
-                const distance = {}
-                distance[check_idx_u] = d_sq(x_y(check_idx_u), x_y_of_toIdx)
-                distance[check_idx_l] = d_sq(x_y(check_idx_l), x_y_of_toIdx)
-                distance[check_idx_r] = d_sq(x_y(check_idx_r), x_y_of_toIdx)
-                distance[check_idx_d] = d_sq(x_y(check_idx_d), x_y_of_toIdx)
-
-                // sort descending by distance, so that the next popped element is the one closest to destination
-                neighbor_movable.sort((x, y) => distance[y] - distance[x])
-
-                // 2. If no reachable neighbor is found, prepare to come back and try for another route
-                if (neighbor_movable.length === 0) {
-                    retry_other_route = true
-                } else {
-                    // otherwise, move to one of the neighbors, and save the remaining in 'valid_mvs' in case
-                    // we need to come back later
-                    valid_mvs[current_try_postion] = neighbor_movable
-                    current_try_postion = neighbor_movable.pop()
-                    try_route.push(current_try_postion)
+                for (n of neighbor_movable) {
+                    scanner.reachable_index.push(n)
+                    scanner.reachable_from.push(idx)
                 }
+                scanner.concat(neighbor_movable)
             }
+            scanner.newly_added = forward_new
+            return scanner
         }
-        
+
+        let scanNext = true
+        let isFound = false
+        while (scanNext) {
+
+            scanner_forward = scanNextLevel(scanner_forward)
+            if (scanner_forward.reachable_index.includes(to_idx)) {
+                isFound = true
+                scanNext = false
+            }
+
+            scanner_backward = scanNextLevel(scanner_backward)
+
+            // Check if there's a common reachable index between forward and backward scan
+            // That means our two scanners have encounter each other half-way
+            // From that common index, trace back to construct the route
+            
+
+        }
+
         return {
-            found: isFound,
-            route: isFound ? try_route : []
+            found: false
         }
     }
 
