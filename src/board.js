@@ -141,6 +141,29 @@ export default class Board extends React.Component {
          */
         const exclude = idx => try_route.includes(idx) || failed_idx.includes(idx)
 
+        /**
+         * (column, row) representation of square array index
+         * @param {*} idx input index
+         * @returns (x, y) = (col_idx, row_idx)
+         */
+        const x_y = idx => {
+            return {
+                x: idx % w,
+                y: Math.floor(idx / w)
+            }
+        }
+        /**
+         * distance between two (x, y) pairs
+         * @param {*} p1 
+         * @param {*} p2 
+         * @returns 
+         */
+        const d_sq = (p1, p2) => {
+            const dx = p1.x - p2.x
+            const dy = p1.y - p2.y
+            return dx * dx + dy * dy
+        }
+
         while (try_next) {
 
             if (retry_other_route) {
@@ -148,9 +171,19 @@ export default class Board extends React.Component {
                  * there's no way to reach to to_idx using the current route, we have to
                  * come back to previous check-point and retry for another route
                  */
-                // mark current position index as 'failed'
-                failed_idx.push(try_route.pop())
 
+                // mark current position index as 'failed'
+                const try_fail = try_route.pop()                
+                failed_idx.push(try_fail)
+
+                // also remove the failed index from our possible-route storage
+                // to reduce number of interations
+                for (const props in valid_mvs) {
+                    if (valid_mvs[props].includes(try_fail)) {
+                        valid_mvs[props].splice(valid_mvs[props].indexOf(try_fail), 1)
+                    }
+                }
+                
                 if (try_route.length === 0) {
                     // all routes tried but no path found
                     try_next = false
@@ -188,25 +221,24 @@ export default class Board extends React.Component {
                 const check_idx_r = current_try_postion + 1
                 const check_idx_d = current_try_postion + w
 
+                let valid_check_idx = []
+                if (check_idx_u >= 0) valid_check_idx.push(check_idx_u)
+                if (check_idx_l >= line_wrap.start) valid_check_idx.push(check_idx_l)
+                if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
+                if (check_idx_d < max_idx) valid_check_idx.push(check_idx_d)
+
                 // destination is reached, no need further checking
-                if (check_idx_u === to_idx || check_idx_l === to_idx || check_idx_r === to_idx || check_idx_d === to_idx) {
+                if (valid_check_idx.includes(to_idx)) {
                     try_next = false
                     isFound = true
                     try_route.push(to_idx)
                     break
                 }
 
-                if (check_idx_u >= 0 && indexNotOccupied(check_idx_u) && !exclude(check_idx_u)) {
-                    neighbor_movable.push(check_idx_u)
-                }
-                if (check_idx_l >= line_wrap.start && indexNotOccupied(check_idx_l) && !exclude(check_idx_l)) {
-                    neighbor_movable.push(check_idx_l)
-                }
-                if (check_idx_r < line_wrap.end && indexNotOccupied(check_idx_r) && !exclude(check_idx_r)) {
-                    neighbor_movable.push(check_idx_r)
-                }
-                if (check_idx_d < max_idx && indexNotOccupied(check_idx_d) && !exclude(check_idx_d)) {
-                    neighbor_movable.push(check_idx_d)
+                for (const v_idx of valid_check_idx) {
+                    if (indexNotOccupied(v_idx) && !exclude(v_idx)) {
+                        neighbor_movable.push(v_idx)
+                    }
                 }
 
                 /*
@@ -217,28 +249,6 @@ export default class Board extends React.Component {
                  * before those in the left and bottom
                  */
 
-                /**
-                 * (column, row) representation of square array index
-                 * @param {*} idx input index
-                 * @returns (x, y) = (col_idx, row_idx)
-                 */
-                const x_y = idx => {
-                    return {
-                        x: idx % w,
-                        y: Math.floor(idx / w)
-                    }
-                }
-                /**
-                 * distance between two (x, y) pairs
-                 * @param {*} p1 
-                 * @param {*} p2 
-                 * @returns 
-                 */
-                const d_sq = (p1, p2) => {
-                    const dx = p1.x - p2.x
-                    const dy = p1.y - p2.y
-                    return dx * dx + dy * dy
-                }
                 const x_y_of_toIdx = x_y(to_idx)
 
                 const distance = {}
