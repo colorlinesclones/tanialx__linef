@@ -218,12 +218,10 @@ export default class Board extends React.Component {
             }
         }
         
-        const result = {
+        return {
             found: isFound,
             route: try_route
         }
-        console.log(`Move from ${from_idx} to ${to_idx}: ${JSON.stringify(result)}`)
-        return result
     }
 
     onSquareClicked(i) {
