@@ -1,5 +1,15 @@
 export default class Scanner {
 
+    /**
+     * Object to calculate the route to go from @fromValue to @toValue
+     * provided that the one step route from a value to its neighbors is supplied
+     * by function @neighborFuncCheck
+     * 
+     * @param {*} fromValue
+     * @param {*} toValue
+     * @param {*} neighborFuncCheck function used to retrieve valid neighbors of an index
+     * @example neighborFuncCheck = index => [ neighbor_1, neighbor_2, ...]
+     */
     constructor(fromValue, toValue, neighborFuncCheck) {
         this.f = {
             reachable_index: [fromValue],
@@ -67,7 +77,7 @@ export default class Scanner {
     }
 
     scanNextLevelB() {
-        this.scanNextLevel(this.b, this.f.reachable_index[0])
+        this.scanNextLevel(this.b)
     }
 
     /**
@@ -81,13 +91,13 @@ export default class Scanner {
      * @param {*} scanner 
      * @returns 
      */
-    scanNextLevel(scanner, idxBypass) {
+    scanNextLevel(scanner) {
         let nextLevelNeighbors = []
         for (const idx of scanner.newly_added) {
             const from = scanner.reachable_index.indexOf(idx)
 
             // 1. Find all values reachable from the current position
-            let neighbor_movable = this.neighborFuncCheck(idx, [idxBypass])
+            let neighbor_movable = this.neighborFuncCheck(idx)
             neighbor_movable = neighbor_movable.filter(n => !scanner.reachable_index.includes(n))
 
             for (const n of neighbor_movable) {
@@ -99,7 +109,4 @@ export default class Scanner {
         scanner.newly_added = nextLevelNeighbors
         return scanner
     }
-
-
-
 }

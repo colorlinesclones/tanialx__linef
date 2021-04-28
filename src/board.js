@@ -82,7 +82,12 @@ export default class Board extends React.Component {
         }
     }
 
-    validNeighborIndex = (idx, bypass) => {
+    /**
+     * function to retrieve neighbor squares that item at square idx can move to
+     * @param {*} idx
+     * @returns 
+     */
+    validNeighborIndex = idx => {
         const check_idx_u = idx - this.w
         const check_idx_l = idx - 1
         const check_idx_r = idx + 1
@@ -97,7 +102,7 @@ export default class Board extends React.Component {
         if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
         if (check_idx_d < this.w * this.h) valid_check_idx.push(check_idx_d)
 
-        return valid_check_idx.filter(v_idx => this.indexNotOccupied(v_idx) || bypass.includes(v_idx))
+        return valid_check_idx.filter(v_idx => this.indexNotOccupied(v_idx))
     }
 
     indexNotOccupied(idx) {
@@ -161,6 +166,16 @@ export default class Board extends React.Component {
                 break
             }
 
+            // 2. Check for a common index
+            let cIdx = scanner.findCommonIndex()
+            if (cIdx >= 0) {
+                route = scanner.constructRouteFromCommonIndex(cIdx)
+                console.log(`Iteration ${count}: Move from ${from_idx} to ${to_idx} using route ${JSON.stringify(route)}`)
+                isFound = true
+                scanNext = false
+                break
+            }
+
             scanner.scanNextLevelB()
             if (scanner.b.newly_added.length === 0) {
                 /*
@@ -173,8 +188,8 @@ export default class Board extends React.Component {
                 break
             }
 
-            // 2. Check for a common index
-            const cIdx = scanner.findCommonIndex()
+            // Check for a common index again as scanner.b is updated
+            cIdx = scanner.findCommonIndex()
             if (cIdx >= 0) {
                 route = scanner.constructRouteFromCommonIndex(cIdx)
                 isFound = true
