@@ -220,7 +220,7 @@ export default class Board extends React.Component {
         
         return {
             found: isFound,
-            route: try_route
+            route: isFound ? try_route : []
         }
     }
 
