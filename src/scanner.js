@@ -1,16 +1,26 @@
 export default class Scanner {
 
     /**
-     * Object to calculate the route to go from @fromValue to @toValue
+     * Object to calculate the route to go from node:@fromValue to node:@toValue
      * provided that the one step route from a value to its neighbors is supplied
      * by function @neighborFuncCheck
      * 
      * @param {*} fromValue
      * @param {*} toValue
-     * @param {*} neighborFuncCheck function used to retrieve valid neighbors of an index
+     * @param {*} func_getNeighbors function used to retrieve valid neighbors of an index
      * @example neighborFuncCheck = index => [ neighbor_1, neighbor_2, ...]
      */
-    constructor(fromValue, toValue, neighborFuncCheck) {
+    constructor(fromValue, toValue, func_getNeighbors) {
+        /*
+         * Use fScanner & bScanner to store node reachable from 'fromValue' and 'toValue'
+         * 
+         * - reachable_index: node reachable from the original position
+         * - reachable_from: map 1:1 to reachable_index to keep track of route history
+         *                   (we go to reachable_index[i] from reachable_index[reachable_from[i]])
+         * - newly_added: all new reachable idx we have added in the current iteration
+         *                (their neighbors are not yet added to our main list reachable_index
+         *                and should be processed in the next iteration)
+         */
         this.f = {
             reachable_index: [fromValue],
             reachable_from: [fromValue],
@@ -21,11 +31,11 @@ export default class Scanner {
             reachable_from: [toValue],
             newly_added: [toValue]
         }
-        this.neighborFuncCheck = neighborFuncCheck
+        this.func_getNeighbors = func_getNeighbors
     }
 
     /**
-    * Construct the route to go from original index to the input index
+    * Construct the route to go from original node to the input node
     * @param {*} scanner 
     * @param {*} idx 
     * @returns route[ ]
@@ -57,7 +67,7 @@ export default class Scanner {
     }
 
     /**
-     * Construct the route to go from original index of a scanner to the original index of
+     * Construct the route to go from original node of a scanner to the original node of
      * another scanner based on their common index value
      * @param {*} fScanner 
      * @param {*} bScanner 
@@ -74,7 +84,7 @@ export default class Scanner {
 
     tryConstructRouteFromCommonIndex() {
         const c_idx = this.findCommonIndex()
-        if (c_idx >= 0){
+        if (c_idx >= 0) {
             return this.constructRouteFromCommonIndex(c_idx)
         }
         return []
@@ -89,7 +99,7 @@ export default class Scanner {
     }
 
     /**
-     * scan next level of reachable values
+     * scan next level of reachable node
      * 
      * Steps:
      * 1. for each item of 'newly_added' array, find all reachable neighbors of that item
@@ -105,7 +115,7 @@ export default class Scanner {
             const from = scanner.reachable_index.indexOf(idx)
 
             // 1. Find all values reachable from the current position
-            let neighbor_movable = this.neighborFuncCheck(idx)
+            let neighbor_movable = this.func_getNeighbors(idx)
             neighbor_movable = neighbor_movable.filter(n => !scanner.reachable_index.includes(n))
 
             for (const n of neighbor_movable) {
@@ -116,5 +126,62 @@ export default class Scanner {
         }
         scanner.newly_added = nextLevelNeighbors
         return scanner
+    }
+
+    findRoute() {
+        let isFound = false
+        let route = []
+
+        /*
+         * During each iteration
+         * 1. Collect next-level reachable nodes of both 'from' and 'to' into fScanner and bScanner
+         * 2. Check for a common index between two scanners. 
+         *    If yes, that means our two scanners have encounter each other half-way. From that common index, 
+         *    trace back to construct the route
+         */
+
+        while (!isFound) {
+
+            // 1. Collect next-level reachable squares
+            this.scanNextLevelF()
+            if (this.f.newly_added.length === 0) {
+                /*
+                 * fScanner already includes all reachable squares from 'from_idx'
+                 * if 'to_idx' can be reached from 'from_idx', it should have been
+                 * resolved in the previous iteration
+                 */
+                isFound = false
+                break
+            }
+
+            // 2. Check for a common index
+            route = this.tryConstructRouteFromCommonIndex()
+            if (route && route.length > 0) {
+                isFound = true
+                break
+            }
+
+            this.scanNextLevelB()
+            if (this.b.newly_added.length === 0) {
+                /*
+                 * bScanner already includes all reachable squares from 'to_idx'
+                 * if 'from_idx' can be reached from 'to_idx', it should have been
+                 * resolved in the previous iteration
+                 */
+                isFound = false
+                break
+            }
+
+            // Check for a common index again as scanner.b is updated
+            route = this.tryConstructRouteFromCommonIndex()
+            if (route && route.length > 0) {
+                isFound = true
+                break
+            }
+        }
+        return {
+            found: isFound,
+            route: route
+        }
     }
 }

@@ -128,71 +128,13 @@ export default class Board extends React.Component {
          * [i-1] [<i>] [i+1]
          * [   ] [i+w] [   ]
          * 
-         */
-
-        /*
-         * Use fScanner & bScanner to store index of squares reachable from 'from-idx' and 'to-idx'
-         * 
-         * - reachable_index: index of squares reachable from the original position
-         * - reachable_from: map 1:1 to reachable_index to keep track of route history
-         *                   (we go to reachable_index[i] from reachable_index[reachable_from[i]])
-         * - newly_added: all new reachable idx we have added in the current iteration
-         *                (their neighbors are not yet added to our main list reachable_index
-         *                and should be processed in the next iteration)
-         * 
-         * During each iteration
-         * 1. Collect next-level reachable squares of both from_idx and to_idx into fScanner and bScanner
-         * 2. Check for a common index between two scanners. 
-         *    If yes, that means our two scanners have encounter each other half-way. From that common index, 
-         *    trace back to construct the route
-         */
+         */        
         const scanner = new Scanner(from_idx, to_idx, this.validNeighborIndex)
-
-        let isFound = false
-        let route = []
-
-        while (!isFound) {
-            // 1. Collect next-level reachable squares
-            scanner.scanNextLevelF()
-            if (scanner.f.newly_added.length === 0) {
-                /*
-                 * fScanner already includes all reachable squares from 'from_idx'
-                 * if 'to_idx' can be reached from 'from_idx', it should have been
-                 * resolved in the previous iteration
-                 */
-                isFound = false
-                break
-            }
-
-            // 2. Check for a common index
-            route = scanner.tryConstructRouteFromCommonIndex()
-            if (route && route.length > 0) {
-                isFound = true
-                break
-            }
-
-            scanner.scanNextLevelB()
-            if (scanner.b.newly_added.length === 0) {
-                /*
-                 * bScanner already includes all reachable squares from 'to_idx'
-                 * if 'from_idx' can be reached from 'to_idx', it should have been
-                 * resolved in the previous iteration
-                 */
-                isFound = false
-                break
-            }
-
-            // Check for a common index again as scanner.b is updated
-            route = scanner.tryConstructRouteFromCommonIndex()
-            if (route && route.length > 0) {
-                route = scanner.constructRouteFromCommonIndex(cIdx)
-                isFound = true
-                break
-            }
-        }
+        const findRoute = scanner.findRoute()
+        
         return {
-            found: isFound,
-            route: route
+            found: findRoute.found,
+            route: findRoute.route
         }
     }
 
