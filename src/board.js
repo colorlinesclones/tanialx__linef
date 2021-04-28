@@ -157,15 +157,17 @@ export default class Board extends React.Component {
                     isFound = false
                 } else {
                     // return to a previous check-point
-                    current_try_postion = try_route[try_route.length - 1]
+                    const previous_checkpoint = try_route[try_route.length - 1]
 
                     // retrieve all reachable neighbors of 'curr_from' that we previously store in 'valid_vms'
-                    let neighbors = valid_mvs[current_try_postion]
+                    let neighbors = valid_mvs[previous_checkpoint]
                     if (!neighbors || neighbors.length === 0) {
                         // all neighbors have been tried and no success
                         retry_other_route = true
                     } else {
-                        try_route.push(neighbors.pop())
+                        // Set up our new current-postion
+                        current_try_postion = neighbors.pop()
+                        try_route.push(current_try_postion)
                         retry_other_route = false
                     }
                 }
@@ -175,7 +177,7 @@ export default class Board extends React.Component {
                  */
 
                 // line boundaries
-                const line_wrap = this.lineWrapOfIndex(from_idx)
+                const line_wrap = this.lineWrapOfIndex(current_try_postion)
 
                 // 1. Find all squares reachable from the current position
 
@@ -209,10 +211,9 @@ export default class Board extends React.Component {
                 } else {
                     // otherwise, move to one of the neighbors, and save the remaining in 'valid_mvs' in case
                     // we need to come back later
-                    const try_now = neighbor_movable.pop()
-                    try_route.push(try_now)
                     valid_mvs[current_try_postion] = neighbor_movable
-                    current_try_postion = try_now
+                    current_try_postion = neighbor_movable.pop()
+                    try_route.push(current_try_postion)
                 }
             }
         }
