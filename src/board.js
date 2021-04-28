@@ -85,6 +85,17 @@ export default class Board extends React.Component {
         return this.state.squares[idx] === null || this.state.squares[idx].type === 'f'
     }
 
+    /**
+     * scan next level of reachable squares
+     * 
+     * Steps:
+     * 1. for each item of 'newly_added' array, find all reachable neighbors of that item
+     * 2. add new item to 'reachable_index' array, and reference their array index in 'reachable_from'
+     * 3. replace 'newly_added' items with the new ones from step 1
+     * 
+     * @param {*} scanner 
+     * @returns 
+     */
     scanNextLevel(scanner) {
         let nextLevelNeighbors = []
         for (const idx of scanner.newly_added) {
@@ -93,7 +104,6 @@ export default class Board extends React.Component {
             // 1. Find all squares reachable from the current position
             let neighbor_movable = [] // array contains all neighbor squares reachable from current position
 
-
             const check_idx_u = idx - this.w
             const check_idx_l = idx - 1
             const check_idx_r = idx + 1
@@ -101,7 +111,7 @@ export default class Board extends React.Component {
 
             // Check for boundaries:
             let valid_check_idx = []
-            const line_wrap = this.lineWrapOfIndex(idx) // line boundaries
+            const line_wrap = this.lineWrapOfIndex(idx)
             if (check_idx_u >= 0) valid_check_idx.push(check_idx_u)
             if (check_idx_l >= line_wrap.start) valid_check_idx.push(check_idx_l)
             if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
