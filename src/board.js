@@ -148,11 +148,11 @@ export default class Board extends React.Component {
          */
         const scanner = new Scanner(from_idx, to_idx, this.validNeighborIndex)
 
-        let scanNext = true
         let isFound = false
         let route = []
 
         while (scanNext) {
+        while (!isFound) {
             // 1. Collect next-level reachable squares
             scanner.scanNextLevelF()
             if (scanner.f.newly_added.length === 0) {
@@ -161,18 +161,15 @@ export default class Board extends React.Component {
                  * if 'to_idx' can be reached from 'from_idx', it should have been
                  * resolved in the previous iteration
                  */
-                scanNext = false
                 isFound = false
                 break
             }
 
             // 2. Check for a common index
-            let cIdx = scanner.findCommonIndex()
-            if (cIdx >= 0) {
-                route = scanner.constructRouteFromCommonIndex(cIdx)
+            route = scanner.tryConstructRouteFromCommonIndex()
+            if (route && route.length > 0) {
                 console.log(`Iteration ${count}: Move from ${from_idx} to ${to_idx} using route ${JSON.stringify(route)}`)
                 isFound = true
-                scanNext = false
                 break
             }
 
@@ -183,17 +180,16 @@ export default class Board extends React.Component {
                  * if 'from_idx' can be reached from 'to_idx', it should have been
                  * resolved in the previous iteration
                  */
-                scanNext = false
                 isFound = false
                 break
             }
 
             // Check for a common index again as scanner.b is updated
-            cIdx = scanner.findCommonIndex()
-            if (cIdx >= 0) {
+            route = scanner.tryConstructRouteFromCommonIndex()
+            if (route && route.length > 0) {
                 route = scanner.constructRouteFromCommonIndex(cIdx)
                 isFound = true
-                scanNext = false
+                break
             }
         }
         return {

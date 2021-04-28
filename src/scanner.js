@@ -72,6 +72,14 @@ export default class Scanner {
         return route
     }
 
+    tryConstructRouteFromCommonIndex() {
+        const c_idx = this.findCommonIndex()
+        if (c_idx >= 0){
+            return this.constructRouteFromCommonIndex(c_idx)
+        }
+        return []
+    }
+
     scanNextLevelF() {
         this.scanNextLevel(this.f)
     }
