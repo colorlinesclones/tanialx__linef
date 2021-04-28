@@ -6,6 +6,8 @@ export default class Board extends React.Component {
 
     constructor(props) {
         super(props);
+        this.w = parseInt(this.props.w)
+        this.h = parseInt(this.props.h)
         this.colors = ['#FF9494', '#FFD08B', '#E2E68C', '#A8F0D4', '#9DE2FE', '#C5B8F0', '#FBD8FF']
         this.numberOfPreRenderedItemAtEachMove = 3
         this.state = {
@@ -15,7 +17,7 @@ export default class Board extends React.Component {
     }
 
     initArray() {
-        let arr = Array(this.props.w * this.props.h).fill(null)
+        let arr = Array(this.w * this.h).fill(null)
         const noRandomP = 5;
         const noRandomF = this.numberOfPreRenderedItemAtEachMove;
         let freeSquareIdxArr = this.randomFreeSquareIndex(noRandomP + noRandomF, arr, [])
@@ -71,11 +73,57 @@ export default class Board extends React.Component {
         return free_square_index_arr
     }
 
+    lineWrapOfIndex(idx) {
+        const st = Math.floor(idx / this.h) * this.w
+        return {
+            start: st,
+            end: st + this.w
+        }
+    }
+
+    /**
+     * check if there's a clear path for item to move from
+     * one square to another
+     * @param {*} from_idx current position index
+     * @param {*} to_idx destination index
+     * @returns true if a path is found; false otherwise
+     */
+    movable(from_idx, to_idx) {
+        /*
+         * at regular location, item can move to 4 neighbor squares
+         * i: index of item
+         * X: where i can move to, if its index is valid
+         * 
+         * also, i-1 and i+1 should be within line boundaries as item at beginning of one row
+         * should not be able to move to the end of the previous row
+         * 
+         * [   ] [i-w] [   ]
+         * [i-1] [<i>] [i+1]
+         * [   ] [i+w] [   ]
+         * 
+         */
+
+        const sq = this.state.squares
+        const max_idx = sq.length
+        const w = this.w
+
+        const indexNotOccupied = idx => sq[idx] === null || sq[idx].type === 'f'
+
+        // line boundaries
+        const line_wrap = this.lineWrapOfIndex(from_idx)
+
+        /**
+         * @todo Implementation
+         */
+
+        return false
+    }
+
     onSquareClicked(i) {
         if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
             // Detect attempt to move item from this square to another square        
             this.setState({ selected: i })
-        } else if (this.state.selected != null) {
+        } else if (this.state.selected != null && this.movable(this.state.selected, i)) {
 
             let random_free_square_index = null
             let idx_of_f_items = this.fItems()
@@ -159,8 +207,8 @@ export default class Board extends React.Component {
 
     checkResolved(curr_squares, active_idx_arr) {
         let resolved = []
-        const w = parseInt(this.props.w)
-        const h = parseInt(this.props.h)
+        const w = this.w
+        const h = this.h
 
         active_idx_arr.forEach(i => {
 
