@@ -109,21 +109,127 @@ export default class Board extends React.Component {
 
         const indexNotOccupied = idx => sq[idx] === null || sq[idx].type === 'f'
 
-        // line boundaries
-        const line_wrap = this.lineWrapOfIndex(from_idx)
+        /*
+         * - try_route: current route (stack of index) we are checking
+         * - current_try_postion: current index we are chechking
+         * - valid_mvs: save all possible routes that we have not yet checked so that
+         *              we can come back later to check for another route in case the
+         *              current route fails
+         * - retry_other_route: signal that to_idx cannot be reached from the route we're currenty trying
+         * - try_next: signal that we should continue try/retry with next interations as there are
+         *             still possibilities of a clear path found
+         * - isFound: information of our result
+         * - failed_idx: keep track of failed check: there's no path to to_idx from these, so that
+         *               we don't need to same index over and over again in the next iterations
+         */
+        let current_try_postion = from_idx
+        let try_route = [from_idx]
+        let valid_mvs = {}
+        let retry_other_route = false;
+        let try_next = true
+        let isFound = false
+        let failed_idx = []
 
         /**
-         * @todo Implementation
+         * check if this index should be excluded from recursively checking
+         * to prevent forming a cycle
+         * either 
+         * - it is in the fail-list ('failed_idx') that we already checked, or
+         * - it is included in try_route (that means we have travelled through this idx at some previous iteration)
+         * @param {*} idx index to check
+         * @returns 
          */
+        const exclude = idx => try_route.includes(idx) || failed_idx.includes(idx)
 
-        return false
+        while (try_next) {
+
+            if (retry_other_route) {
+                /**
+                 * there's no way to reach to to_idx using the current route, we have to
+                 * come back to previous check-point and retry for another route
+                 */
+                // mark current position index as 'failed'
+                failed_idx.push(try_route.pop())
+
+                if (try_route.length === 0) {
+                    // all routes tried but no path found
+                    try_next = false
+                    isFound = false
+                } else {
+                    // return to a previous check-point
+                    current_try_postion = try_route[try_route.length - 1]
+
+                    // retrieve all reachable neighbors of 'curr_from' that we previously store in 'valid_vms'
+                    let neighbors = valid_mvs[current_try_postion]
+                    if (!neighbors || neighbors.length === 0) {
+                        // all neighbors have been tried and no success
+                        retry_other_route = true
+                    } else {
+                        try_route.push(neighbors.pop())
+                        retry_other_route = false
+                    }
+                }
+            } else {
+                /*
+                 * Continue with the current route as there's no conflict yet
+                 */
+
+                // line boundaries
+                const line_wrap = this.lineWrapOfIndex(from_idx)
+
+                // 1. Find all squares reachable from the current position
+
+                let neighbor_movable = []
+                const check_idx_u = current_try_postion - w
+                const check_idx_l = current_try_postion - 1
+                const check_idx_r = current_try_postion + 1
+                const check_idx_d = current_try_postion + w
+                if (check_idx_u === to_idx || check_idx_l === to_idx || check_idx_r === to_idx || check_idx_d === to_idx) {
+                    try_next = false
+                    isFound = true
+                    try_route.push(to_idx)
+                    break
+                }
+                if (check_idx_u >= 0 && indexNotOccupied(check_idx_u) && !exclude(check_idx_u)) {
+                    neighbor_movable.push(check_idx_u)
+                }
+                if (check_idx_l >= line_wrap.start && indexNotOccupied(check_idx_l) && !exclude(check_idx_l)) {
+                    neighbor_movable.push(check_idx_l)
+                }
+                if (check_idx_r < line_wrap.end && indexNotOccupied(check_idx_r) && !exclude(check_idx_r)) {
+                    neighbor_movable.push(check_idx_r)
+                }
+                if (check_idx_d < max_idx && indexNotOccupied(check_idx_d) && !exclude(check_idx_d)) {
+                    neighbor_movable.push(check_idx_d)
+                }
+
+                // 2. If no reachable neighbor is found, prepare to come back and try for another route
+                if (neighbor_movable.length === 0) {
+                    retry_other_route = true
+                } else {
+                    // otherwise, move to one of the neighbors, and save the remaining in 'valid_mvs' in case
+                    // we need to come back later
+                    const try_now = neighbor_movable.pop()
+                    try_route.push(try_now)
+                    valid_mvs[current_try_postion] = neighbor_movable
+                    current_try_postion = try_now
+                }
+            }
+        }
+        
+        const result = {
+            found: isFound,
+            route: try_route
+        }
+        console.log(`Move from ${from_idx} to ${to_idx}: ${JSON.stringify(result)}`)
+        return result
     }
 
     onSquareClicked(i) {
         if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
             // Detect attempt to move item from this square to another square        
             this.setState({ selected: i })
-        } else if (this.state.selected != null && this.movable(this.state.selected, i)) {
+        } else if (this.state.selected != null && this.movable(this.state.selected, i).found) {
 
             let random_free_square_index = null
             let idx_of_f_items = this.fItems()
