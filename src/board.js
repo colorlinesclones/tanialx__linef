@@ -6,6 +6,8 @@ export default class Board extends React.Component {
 
     constructor(props) {
         super(props);
+        this.w = parseInt(this.props.w)
+        this.h = parseInt(this.props.h)
         this.colors = ['#FF9494', '#FFD08B', '#E2E68C', '#A8F0D4', '#9DE2FE', '#C5B8F0', '#FBD8FF']
         this.numberOfPreRenderedItemAtEachMove = 3
         this.state = {
@@ -15,7 +17,7 @@ export default class Board extends React.Component {
     }
 
     initArray() {
-        let arr = Array(this.props.w * this.props.h).fill(null)
+        let arr = Array(this.w * this.h).fill(null)
         const noRandomP = 5;
         const noRandomF = this.numberOfPreRenderedItemAtEachMove;
         let freeSquareIdxArr = this.randomFreeSquareIndex(noRandomP + noRandomF, arr, [])
@@ -71,11 +73,207 @@ export default class Board extends React.Component {
         return free_square_index_arr
     }
 
+    lineWrapOfIndex(idx) {
+        const st = Math.floor(idx / this.h) * this.w
+        return {
+            start: st,
+            end: st + this.w
+        }
+    }
+
+    /**
+     * check if there's a clear path for item to move from
+     * one square to another
+     * @param {*} from_idx current position index
+     * @param {*} to_idx destination index
+     * @returns true if a path is found; false otherwise
+     */
+    movable(from_idx, to_idx) {
+        /*
+         * at regular location, item can move to 4 neighbor squares
+         * i: index of item
+         * X: where i can move to, if its index is valid
+         * 
+         * also, i-1 and i+1 should be within line boundaries as item at beginning of one row
+         * should not be able to move to the end of the previous row
+         * 
+         * [   ] [i-w] [   ]
+         * [i-1] [<i>] [i+1]
+         * [   ] [i+w] [   ]
+         * 
+         */
+
+        const sq = this.state.squares
+        const max_idx = sq.length
+        const w = this.w
+
+        const indexNotOccupied = idx => sq[idx] === null || sq[idx].type === 'f'
+
+        /*
+         * - try_route: current route (stack of index) we are checking
+         * - current_try_postion: current index we are chechking
+         * - valid_mvs: save all possible routes that we have not yet checked so that
+         *              we can come back later to check for another route in case the
+         *              current route fails
+         * - retry_other_route: signal that to_idx cannot be reached from the route we're currenty trying
+         * - try_next: signal that we should continue try/retry with next interations as there are
+         *             still possibilities of a clear path found
+         * - isFound: information of our result
+         * - failed_idx: keep track of failed check: there's no path to to_idx from these, so that
+         *               we don't need to same index over and over again in the next iterations
+         */
+        let current_try_postion = from_idx
+        let try_route = [from_idx]
+        let valid_mvs = {}
+        let retry_other_route = false;
+        let try_next = true
+        let isFound = false
+        let failed_idx = []
+
+        /**
+         * check if this index should be excluded from recursively checking
+         * to prevent forming a cycle
+         * either 
+         * - it is in the fail-list ('failed_idx') that we already checked, or
+         * - it is included in try_route (that means we have travelled through this idx at some previous iteration)
+         * @param {*} idx index to check
+         * @returns 
+         */
+        const exclude = idx => try_route.includes(idx) || failed_idx.includes(idx)
+
+        while (try_next) {
+
+            if (retry_other_route) {
+                /**
+                 * there's no way to reach to to_idx using the current route, we have to
+                 * come back to previous check-point and retry for another route
+                 */
+                // mark current position index as 'failed'
+                failed_idx.push(try_route.pop())
+
+                if (try_route.length === 0) {
+                    // all routes tried but no path found
+                    try_next = false
+                    isFound = false
+                } else {
+                    // return to a previous check-point
+                    const previous_checkpoint = try_route[try_route.length - 1]
+
+                    // retrieve all reachable neighbors of 'curr_from' that we previously store in 'valid_vms'
+                    let neighbors = valid_mvs[previous_checkpoint]
+                    if (!neighbors || neighbors.length === 0) {
+                        // all neighbors have been tried and no success
+                        retry_other_route = true
+                    } else {
+                        // Set up our new current-postion
+                        current_try_postion = neighbors.pop()
+                        try_route.push(current_try_postion)
+                        retry_other_route = false
+                    }
+                }
+            } else {
+                /*
+                 * Continue with the current route as there's no conflict yet
+                 */
+
+                // line boundaries
+                const line_wrap = this.lineWrapOfIndex(current_try_postion)
+
+                // 1. Find all squares reachable from the current position
+
+                let neighbor_movable = [] // array contains all neighbor squares reachable from current position
+
+                const check_idx_u = current_try_postion - w
+                const check_idx_l = current_try_postion - 1
+                const check_idx_r = current_try_postion + 1
+                const check_idx_d = current_try_postion + w
+
+                // destination is reached, no need further checking
+                if (check_idx_u === to_idx || check_idx_l === to_idx || check_idx_r === to_idx || check_idx_d === to_idx) {
+                    try_next = false
+                    isFound = true
+                    try_route.push(to_idx)
+                    break
+                }
+
+                if (check_idx_u >= 0 && indexNotOccupied(check_idx_u) && !exclude(check_idx_u)) {
+                    neighbor_movable.push(check_idx_u)
+                }
+                if (check_idx_l >= line_wrap.start && indexNotOccupied(check_idx_l) && !exclude(check_idx_l)) {
+                    neighbor_movable.push(check_idx_l)
+                }
+                if (check_idx_r < line_wrap.end && indexNotOccupied(check_idx_r) && !exclude(check_idx_r)) {
+                    neighbor_movable.push(check_idx_r)
+                }
+                if (check_idx_d < max_idx && indexNotOccupied(check_idx_d) && !exclude(check_idx_d)) {
+                    neighbor_movable.push(check_idx_d)
+                }
+
+                /*
+                 * try to order reachable neighbors based on distance to destination index
+                 * ex:
+                 * if destination is located in a row above the current position and to the right,
+                 * check for neighbor-square-above and neighbor-square-right
+                 * before those in the left and bottom
+                 */
+
+                /**
+                 * (column, row) representation of square array index
+                 * @param {*} idx input index
+                 * @returns (x, y) = (col_idx, row_idx)
+                 */
+                const x_y = idx => {
+                    return {
+                        x: idx % w,
+                        y: Math.floor(idx / w)
+                    }
+                }
+                /**
+                 * distance between two (x, y) pairs
+                 * @param {*} p1 
+                 * @param {*} p2 
+                 * @returns 
+                 */
+                const d_sq = (p1, p2) => {
+                    const dx = p1.x - p2.x
+                    const dy = p1.y - p2.y
+                    return dx * dx + dy * dy
+                }
+                const x_y_of_toIdx = x_y(to_idx)
+
+                const distance = {}
+                distance[check_idx_u] = d_sq(x_y(check_idx_u), x_y_of_toIdx)
+                distance[check_idx_l] = d_sq(x_y(check_idx_l), x_y_of_toIdx)
+                distance[check_idx_r] = d_sq(x_y(check_idx_r), x_y_of_toIdx)
+                distance[check_idx_d] = d_sq(x_y(check_idx_d), x_y_of_toIdx)
+
+                // sort descending by distance, so that the next popped element is the one closest to destination
+                neighbor_movable.sort((x, y) => distance[y] - distance[x])
+
+                // 2. If no reachable neighbor is found, prepare to come back and try for another route
+                if (neighbor_movable.length === 0) {
+                    retry_other_route = true
+                } else {
+                    // otherwise, move to one of the neighbors, and save the remaining in 'valid_mvs' in case
+                    // we need to come back later
+                    valid_mvs[current_try_postion] = neighbor_movable
+                    current_try_postion = neighbor_movable.pop()
+                    try_route.push(current_try_postion)
+                }
+            }
+        }
+        
+        return {
+            found: isFound,
+            route: isFound ? try_route : []
+        }
+    }
+
     onSquareClicked(i) {
         if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
             // Detect attempt to move item from this square to another square        
             this.setState({ selected: i })
-        } else if (this.state.selected != null) {
+        } else if (this.state.selected != null && this.movable(this.state.selected, i).found) {
 
             let random_free_square_index = null
             let idx_of_f_items = this.fItems()
@@ -159,8 +357,8 @@ export default class Board extends React.Component {
 
     checkResolved(curr_squares, active_idx_arr) {
         let resolved = []
-        const w = parseInt(this.props.w)
-        const h = parseInt(this.props.h)
+        const w = this.w
+        const h = this.h
 
         active_idx_arr.forEach(i => {
 
