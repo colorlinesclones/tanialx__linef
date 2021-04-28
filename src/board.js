@@ -1,6 +1,7 @@
 import React from 'react';
 import './index.css';
 import Square from './square.js';
+import Scanner from './scanner.js';
 
 export default class Board extends React.Component {
 
@@ -81,54 +82,27 @@ export default class Board extends React.Component {
         }
     }
 
+    validNeighborIndex = (idx, bypass) => {
+        const check_idx_u = idx - this.w
+        const check_idx_l = idx - 1
+        const check_idx_r = idx + 1
+        const check_idx_d = idx + this.w
+
+        // Check for boundaries:
+        let valid_check_idx = []
+        const line_wrap = this.lineWrapOfIndex(idx)
+
+        if (check_idx_u >= 0) valid_check_idx.push(check_idx_u)
+        if (check_idx_l >= line_wrap.start) valid_check_idx.push(check_idx_l)
+        if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
+        if (check_idx_d < this.w * this.h) valid_check_idx.push(check_idx_d)
+
+        return valid_check_idx.filter(v_idx => this.indexNotOccupied(v_idx) || bypass.includes(v_idx))
+    }
+
     indexNotOccupied(idx) {
         return this.state.squares[idx] === null || this.state.squares[idx].type === 'f'
     }
-
-    /**
-     * scan next level of reachable squares
-     * 
-     * Steps:
-     * 1. for each item of 'newly_added' array, find all reachable neighbors of that item
-     * 2. add new item to 'reachable_index' array, and reference their array index in 'reachable_from'
-     * 3. replace 'newly_added' items with the new ones from step 1
-     * 
-     * @param {*} scanner 
-     * @returns 
-     */
-    scanNextLevel(scanner) {
-        let nextLevelNeighbors = []
-        for (const idx of scanner.newly_added) {
-            const from = scanner.reachable_index.indexOf(idx)
-
-            // 1. Find all squares reachable from the current position
-            let neighbor_movable = [] // array contains all neighbor squares reachable from current position
-
-            const check_idx_u = idx - this.w
-            const check_idx_l = idx - 1
-            const check_idx_r = idx + 1
-            const check_idx_d = idx + this.w
-
-            // Check for boundaries:
-            let valid_check_idx = []
-            const line_wrap = this.lineWrapOfIndex(idx)
-            if (check_idx_u >= 0) valid_check_idx.push(check_idx_u)
-            if (check_idx_l >= line_wrap.start) valid_check_idx.push(check_idx_l)
-            if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
-            if (check_idx_d < this.w * this.h) valid_check_idx.push(check_idx_d)
-
-            neighbor_movable = valid_check_idx.filter(v_idx => this.indexNotOccupied(v_idx) && !scanner.reachable_index.includes(v_idx))
-
-            for (const n of neighbor_movable) {
-                scanner.reachable_index.push(n)
-                scanner.reachable_from.push(from)
-            }
-            nextLevelNeighbors = nextLevelNeighbors.concat(neighbor_movable)
-        }
-        scanner.newly_added = nextLevelNeighbors
-        return scanner
-    }
-
     /**
      * check if there's a clear path for item to move from
      * one square to another
@@ -167,63 +141,7 @@ export default class Board extends React.Component {
          *    If yes, that means our two scanners have encounter each other half-way. From that common index, 
          *    trace back to construct the route
          */
-
-        let fScanner = {
-            reachable_index: [from_idx],
-            reachable_from: [from_idx],
-            newly_added: [from_idx]
-        }
-        let bScanner = {
-            reachable_index: [to_idx],
-            reachable_from: [to_idx],
-            newly_added: [to_idx]
-        }
-
-        /**
-         * Find common value in reachable_index array of two input scanners
-         * @param {*} fScanner 
-         * @param {*} bScanner 
-         * @returns the value found
-         */
-        const findCommonIndex = (fScanner, bScanner) => {
-            for (const idx of fScanner.reachable_index) {
-                if (bScanner.reachable_index.includes(idx)) {
-                    return idx
-                }
-            }
-            return -1
-        }
-        /**
-         * Construct the route to go from original index to the input index
-         * @param {*} scanner 
-         * @param {*} idx 
-         * @returns route[ ]
-         */
-        const traceBackRoute = (scanner, idx) => {
-            let route = []
-            let curr = scanner.reachable_index.indexOf(idx)
-            while (curr !== 0) {
-                const cameFrom = scanner.reachable_from[curr]
-                route.push(scanner.reachable_from[cameFrom])
-                curr = cameFrom
-            }
-            return route
-        }
-        /**
-         * Construct the route to go from original index of a scanner to the original index of
-         * another scanner based on their common index value
-         * @param {*} fScanner 
-         * @param {*} bScanner 
-         * @param {*} c_idx 
-         * @returns route[ ]
-         */
-        const constructRouteFromCommonIndex = (fScanner, bScanner, c_idx) => {
-            let route = traceBackRoute(fScanner, c_idx)
-            route.reverse()
-            route.push(c_idx)
-            route.concat(traceBackRoute(bScanner, c_idx))
-            return route
-        }
+        const scanner = new Scanner(from_idx, to_idx, this.validNeighborIndex)
 
         let scanNext = true
         let isFound = false
@@ -231,8 +149,8 @@ export default class Board extends React.Component {
 
         while (scanNext) {
             // 1. Collect next-level reachable squares
-            fScanner = this.scanNextLevel(fScanner)
-            if (fScanner.newly_added.length === 0) {
+            scanner.scanNextLevelF()
+            if (scanner.f.newly_added.length === 0) {
                 /*
                  * fScanner already includes all reachable squares from 'from_idx'
                  * if 'to_idx' can be reached from 'from_idx', it should have been
@@ -243,8 +161,8 @@ export default class Board extends React.Component {
                 break
             }
 
-            bScanner = this.scanNextLevel(bScanner)
-            if (bScanner.newly_added.length === 0) {
+            scanner.scanNextLevelB()
+            if (scanner.b.newly_added.length === 0) {
                 /*
                  * bScanner already includes all reachable squares from 'to_idx'
                  * if 'from_idx' can be reached from 'to_idx', it should have been
@@ -256,14 +174,13 @@ export default class Board extends React.Component {
             }
 
             // 2. Check for a common index
-            const cIdx = findCommonIndex(fScanner, bScanner)
+            const cIdx = scanner.findCommonIndex()
             if (cIdx >= 0) {
-                route = constructRouteFromCommonIndex(fScanner, bScanner, cIdx)
+                route = scanner.constructRouteFromCommonIndex(cIdx)
                 isFound = true
                 scanNext = false
             }
         }
-
         return {
             found: isFound,
             route: route
