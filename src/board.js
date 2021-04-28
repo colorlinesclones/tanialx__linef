@@ -168,7 +168,6 @@ export default class Board extends React.Component {
             // 2. Check for a common index
             route = scanner.tryConstructRouteFromCommonIndex()
             if (route && route.length > 0) {
-                console.log(`Iteration ${count}: Move from ${from_idx} to ${to_idx} using route ${JSON.stringify(route)}`)
                 isFound = true
                 break
             }
