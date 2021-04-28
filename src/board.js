@@ -186,12 +186,41 @@ export default class Board extends React.Component {
                 const check_idx_l = current_try_postion - 1
                 const check_idx_r = current_try_postion + 1
                 const check_idx_d = current_try_postion + w
+
+                // destination is reached, no need further checking
                 if (check_idx_u === to_idx || check_idx_l === to_idx || check_idx_r === to_idx || check_idx_d === to_idx) {
                     try_next = false
                     isFound = true
                     try_route.push(to_idx)
                     break
                 }
+
+                /*
+                 * try to order reachable neighbors based on distance to destination index
+                 * ex:
+                 * if destination is located in a row above the current position and to the right,
+                 * check for neighbor-square-above and neighbor-square-right
+                 * before those in the left and bottom
+                 */
+
+                const x_y = idx => {
+                    return {
+                        x: idx % w,
+                        y: Math.floor(idx / w)
+                    }
+                }
+                const d_sq = (p1, p2) => {
+                    const dx = p1.x - p2.x
+                    const dy = p1.y - p2.y
+                    return dx * dx + dy * dy
+                }
+                const x_y_of_toIdx = x_y(to_idx)
+                const distance = {}
+                distance[check_idx_u] = d_sq(x_y(check_idx_u), x_y_of_toIdx)
+                distance[check_idx_l] = d_sq(x_y(check_idx_l), x_y_of_toIdx)
+                distance[check_idx_r] = d_sq(x_y(check_idx_r), x_y_of_toIdx)
+                distance[check_idx_d] = d_sq(x_y(check_idx_d), x_y_of_toIdx)
+
                 if (check_idx_u >= 0 && indexNotOccupied(check_idx_u) && !exclude(check_idx_u)) {
                     neighbor_movable.push(check_idx_u)
                 }
@@ -204,6 +233,7 @@ export default class Board extends React.Component {
                 if (check_idx_d < max_idx && indexNotOccupied(check_idx_d) && !exclude(check_idx_d)) {
                     neighbor_movable.push(check_idx_d)
                 }
+                neighbor_movable.sort((x, y) => distance[y] - distance[x])
 
                 // 2. If no reachable neighbor is found, prepare to come back and try for another route
                 if (neighbor_movable.length === 0) {
