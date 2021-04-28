@@ -151,7 +151,6 @@ export default class Board extends React.Component {
         let isFound = false
         let route = []
 
-        while (scanNext) {
         while (!isFound) {
             // 1. Collect next-level reachable squares
             scanner.scanNextLevelF()
