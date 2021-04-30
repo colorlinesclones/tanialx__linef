@@ -3,12 +3,13 @@ import SquareItem from './squareItem'
 /**
  * Check for a match-5+
  * 
- * This function checks for arr surrounding the active indexes in *active_idx_arr*
+ * This function checks for elements surrounding the active indexes in *active_idx_arr*
  * to see if a vertical/horizontal or diagonal line with 5+ items of the same color is form 
  * 
- * @param {*} arr square array to check from
- * @param {*} active_idx_arr array of all active indexes
- * @returns array: all indexes of *arr* that involve in a match
+ * @param {*} arr array represents a 2-dimension (*w x h*) grid of items
+ * @param {*} active_idx_arr array of all indexes to be checked for a match
+ * @param {*} dimen { w, h } *arr*'s dimensions
+ * @returns array contains indexes of *arr* that involve in a match
  */
 export function checkResolved(arr, active_idx_arr, { w, h }) {
     let resolved = []

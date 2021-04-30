@@ -158,7 +158,7 @@ export default class Board extends React.PureComponent {
 
         /*
          * Save index of all actively changed square in active_idx_arr variable
-         * so that we can check if any set of items is resolved later on (match-5)
+         * so that we can check if any set of items is resolved later on (eg. result in a match-5+)
          * Only save those contain 'p' items as 'f' items should not result in any match-5
          */
         let active_idx_arr = [i]
@@ -237,10 +237,8 @@ export default class Board extends React.PureComponent {
             this.updateState_moveItemTo(i)
             return
         }
-        // Else:
-        // A blank square has just been selected but no previous item selection 
-        // recorded in board's state
-        // Ignore this click event
+        // Else: Ignore this click event since a blank square has just been selected
+        // but no previous item-to-move is recorded in board's state
     }
 
     // REACT-RENDER ===================================================================
