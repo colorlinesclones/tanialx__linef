@@ -1,7 +1,6 @@
 import React from 'react';
-import './index.css';
-import Square from './square.js';
-import Scanner from './scanner.js';
+import Square from './square.component.js';
+import Scanner from './scanner';
 import SquareItem from './squareItem';
 import { random_indexes_in_array } from './utils'
 import { checkResolved } from './resolver'

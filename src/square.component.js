@@ -1,5 +1,5 @@
 import React from 'react';
-import Item from './item';
+import Item from './item.component';
 
 export default class Square extends React.PureComponent {
 
