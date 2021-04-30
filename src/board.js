@@ -3,6 +3,22 @@ import './index.css';
 import Square from './square.js';
 import Scanner from './scanner.js';
 
+class SquareItem {
+
+    constructor(type, color) {
+        this.type = type
+        this.color = color
+    }
+
+    isPresentItem() {
+        return this.type === 'p'
+    }
+
+    isFutureItem() {
+        return this.type === 'f'
+    }
+}
+
 export default class Board extends React.PureComponent {
 
     constructor(props) {
@@ -24,15 +40,10 @@ export default class Board extends React.PureComponent {
         const noRandomF = this.numberOfPreRenderedItemAtEachMove;
         let freeSquareIdxArr = this.randomFreeSquareIndex(noRandomP + noRandomF, arr, [])
         for (let i = 0; i < noRandomP; i++) {
-            arr[freeSquareIdxArr.pop()] = {
-                type: 'p',
-                color: this.colors[Math.floor(Math.random() * this.colors.length)]
-            }
-        } for (let i = 0; i < noRandomF; i++) {
-            arr[freeSquareIdxArr.pop()] = {
-                type: 'f',
-                color: this.colors[Math.floor(Math.random() * this.colors.length)]
-            }
+            arr[freeSquareIdxArr.pop()] = new SquareItem('p', this.colors[Math.floor(Math.random() * this.colors.length)])
+        }
+        for (let i = 0; i < noRandomF; i++) {
+            arr[freeSquareIdxArr.pop()] = new SquareItem('f', this.colors[Math.floor(Math.random() * this.colors.length)])
         }
         return arr
     }
@@ -174,10 +185,8 @@ export default class Board extends React.PureComponent {
                  */
                 random_free_square_index = this.randomFreeSquareIndex(this.numberOfPreRenderedItemAtEachMove + 1, squares, [i, this.state.selected])
                 const switch_to_idx = random_free_square_index.pop()
-                squares[switch_to_idx] = {
-                    type: 'p',
-                    color: squares[i].color
-                }
+                squares[switch_to_idx] = new SquareItem('p', squares[i].color)
+
                 // f -> p: add ref to active_idx_arr
                 active_idx_arr.push(switch_to_idx)
 
@@ -188,25 +197,16 @@ export default class Board extends React.PureComponent {
             }
             /** For all other f-items with no conflict, render full-size */
             idx_of_f_items.forEach(idx => {
-                squares[idx] = {
-                    type: 'p',
-                    color: squares[idx].color
-                }
+                squares[idx] = new SquareItem('p', squares[idx].color)
                 // f -> p: add ref to active_idx_arr
                 active_idx_arr.push(idx)
             })
 
             // Create new 'f' (future) items (small items) at some random positions
             for (let i = 0; i < this.numberOfPreRenderedItemAtEachMove; i++) {
-                squares[random_free_square_index.pop()] = {
-                    type: 'f',
-                    color: this.colors[Math.floor(Math.random() * this.colors.length)]
-                }
+                squares[random_free_square_index.pop()] = new SquareItem('f', this.colors[Math.floor(Math.random() * this.colors.length)])
             }
-            squares[i] = {
-                type: squares[this.state.selected].type,
-                color: squares[this.state.selected].color
-            }
+            squares[i] = new SquareItem(squares[this.state.selected].type, squares[this.state.selected].color)
             squares[this.state.selected] = null
             const resolved_idx = this.checkResolved(squares, active_idx_arr)
             for (const ri of resolved_idx) {
