@@ -20,6 +20,18 @@ class SquareItem {
         return new SquareItem(squareItem.type, squareItem.color)
     }
 
+    /**
+     * Check if two items is identical
+     * @param {*} s1 
+     * @param {*} s2 
+     * @returns 
+     */
+    static isIdentical(s1, s2) {
+        if (s1 === null && s2 === null) return true
+        if (s1 === null || s2 === null) return false
+        return s1.type === s2.type && s1.color === s2.color
+    }
+
     isPresentItem() {
         return this.type === 'p'
     }
@@ -299,16 +311,12 @@ export default class Board extends React.PureComponent {
 
         // count forward
         let countForward = []
-        for (let incr = i + 1; incr < line_wrap.end && squares[incr]
-            && squares[incr].type === squares[i].type
-            && squares[incr].color === squares[i].color; incr++) {
+        for (let incr = i + 1; incr < line_wrap.end && SquareItem.isIdentical(squares[incr], squares[i]); incr++) {
             countForward.push(incr)
         }
         // count backward
         let countBackward = []
-        for (let decr = i - 1; decr >= line_wrap.start && squares[decr]
-            && squares[decr].type === squares[i].type
-            && squares[decr].color === squares[i].color; decr--) {
+        for (let decr = i - 1; decr >= line_wrap.start && SquareItem.isIdentical(squares[decr], squares[i]); decr--) {
             countBackward.push(decr)
         }
         // total:
@@ -329,16 +337,12 @@ export default class Board extends React.PureComponent {
         let resolved = []
         // count forward
         let countForward = []
-        for (let incr = i + w; incr < squares.length && squares[incr]
-            && squares[incr].type === squares[i].type
-            && squares[incr].color === squares[i].color; incr += w) {
+        for (let incr = i + w; incr < squares.length && SquareItem.isIdentical(squares[incr], squares[i]); incr += w) {
             countForward.push(incr)
         }
         // count backward
         let countBackward = []
-        for (let decr = i - w; decr >= 0 && squares[decr]
-            && squares[decr].type === squares[i].type
-            && squares[decr].color === squares[i].color; decr -= w) {
+        for (let decr = i - w; decr >= 0 && SquareItem.isIdentical(squares[decr], squares[i]); decr -= w) {
             countBackward.push(decr)
         }
         // total:
@@ -358,16 +362,12 @@ export default class Board extends React.PureComponent {
         {
             // count forward
             let countForward = []
-            for (let incr = i + w + 1; incr < squares.length && squares[incr]
-                && squares[incr].type === squares[i].type
-                && squares[incr].color === squares[i].color; incr += (w + 1)) {
+            for (let incr = i + w + 1; incr < squares.length && SquareItem.isIdentical(squares[incr], squares[i]); incr += (w + 1)) {
                 countForward.push(incr)
             }
             // count backward
             let countBackward = []
-            for (let decr = i - w - 1; decr >= 0 && squares[decr]
-                && squares[decr].type === squares[i].type
-                && squares[decr].color === squares[i].color; decr -= (w + 1)) {
+            for (let decr = i - w - 1; decr >= 0 && SquareItem.isIdentical(squares[decr], squares[i]); decr -= (w + 1)) {
                 countBackward.push(decr)
             }
             // total:
@@ -384,16 +384,12 @@ export default class Board extends React.PureComponent {
         {
             // count forward
             let countForward = []
-            for (let incr = i + w - 1; incr < squares.length && squares[incr]
-                && squares[incr].type === squares[i].type
-                && squares[incr].color === squares[i].color; incr += (w - 1)) {
+            for (let incr = i + w - 1; incr < squares.length && SquareItem.isIdentical(squares[incr], squares[i]); incr += (w - 1)) {
                 countForward.push(incr)
             }
             // count backward
             let countBackward = []
-            for (let decr = i - w + 1; decr >= 0 && squares[decr]
-                && squares[decr].type === squares[i].type
-                && squares[decr].color === squares[i].color; decr -= (w - 1)) {
+            for (let decr = i - w + 1; decr >= 0 && SquareItem.isIdentical(squares[decr], squares[i]); decr -= (w - 1)) {
                 countBackward.push(decr)
             }
             // total:
