@@ -3,7 +3,7 @@ import './index.css';
 import Square from './square.js';
 import Scanner from './scanner.js';
 
-export default class Board extends React.Component {
+export default class Board extends React.PureComponent {
 
     constructor(props) {
         super(props);
@@ -15,6 +15,7 @@ export default class Board extends React.Component {
             squares: this.initArray(),
             selected: null
         };
+        this.onSquareSelected = this.onSquareSelected.bind(this)
     }
 
     initArray() {
@@ -138,7 +139,7 @@ export default class Board extends React.Component {
         }
     }
 
-    onSquareClicked(i) {
+    onSquareSelected(i) {
         if (this.state.squares[i] !== null && this.state.squares[i].type === 'p') {
             // Detect attempt to move item from this square to another square        
             this.setState({ selected: i })
@@ -346,7 +347,8 @@ export default class Board extends React.Component {
     renderSquare(idx) {
         return <Square key={idx}
             item={this.state.squares[idx]}
-            onClick={() => this.onSquareClicked(idx)}
+            identifier={idx}
+            onClick={this.onSquareSelected}
             isActivated={this.state.selected === idx} />;
     }
 
