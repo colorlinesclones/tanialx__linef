@@ -4,7 +4,7 @@ import './index.css';
 import Board from './board.js'
 import Score from './score';
 
-class Game extends React.Component {
+class Game extends React.PureComponent {
 
     constructor(props) {
         super(props)

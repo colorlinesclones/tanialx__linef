@@ -1,22 +1,15 @@
 import React from 'react';
 import Item from './item';
 
-export default class Square extends React.Component {
+export default class Square extends React.PureComponent {
 
-    shouldComponentUpdate(nextProps) {
-		/** Status */
-        if (this.props.isActivated !== nextProps.isActivated) {
-            return true
-        }
-		/** Item */
-        // blank -> blank (no change)
-        if (this.props.item === null && nextProps.item === null) return false
-        // item -> item: compare all sub-properties (type and color) to see if it's the same item
-        if (this.props.item !== null && nextProps.item !== null) {
-            return this.props.item.type !== nextProps.item.type || this.props.item.color !== nextProps.item.color
-        }
-        // item -> blank or blank -> item
-        return true
+    constructor(props) {
+        super(props)
+        this.onClick = this.onClick.bind(this)
+    }
+
+    onClick() {
+        this.props.onClick(this.props.identifier)
     }
 
     render() {
@@ -29,7 +22,7 @@ export default class Square extends React.Component {
         const style = this.props.isActivated ? 'square square-active' : 'square'
         return (
             <div className={style}
-                onClick={() => this.props.onClick()}>
+                onClick={this.onClick}>
                 {itemOrBlank}
             </div>
         );
