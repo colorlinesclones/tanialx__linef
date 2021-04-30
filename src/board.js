@@ -2,48 +2,9 @@ import React from 'react';
 import './index.css';
 import Square from './square.js';
 import Scanner from './scanner.js';
+import SquareItem from './squareItem';
 import { random_indexes_in_array } from './utils'
-
-class SquareItem {
-
-    constructor(type, color) {
-        this.type = type
-        this.color = color
-    }
-
-    /**
-     * Create a new SquareItem by copying all properties of the input item
-     * @param {*} squareItem 
-     * @returns 
-     */
-    static copy(squareItem) {
-        return new SquareItem(squareItem.type, squareItem.color)
-    }
-
-    /**
-     * Check if two items is identical
-     * @param {*} s1 
-     * @param {*} s2 
-     * @returns 
-     */
-    static isIdentical(s1, s2) {
-        if (s1 === null && s2 === null) return true
-        if (s1 === null || s2 === null) return false
-        return s1.type === s2.type && s1.color === s2.color
-    }
-
-    isPresentItem() {
-        return this.type === 'p'
-    }
-
-    isFutureItem() {
-        return this.type === 'f'
-    }
-
-    isFree() {
-        return this.type !== 'p'
-    }
-}
+import { checkResolved } from './resolver'
 
 export default class Board extends React.PureComponent {
 
@@ -137,6 +98,8 @@ export default class Board extends React.PureComponent {
     isSquareFree(idx) {
         return this.state.squares[idx] === null || this.state.squares[idx].isFree()
     }
+
+    // CLICK-EVENT ===================================================================
 
     /**
      * check if there's a clear path for item to move from
@@ -241,7 +204,7 @@ export default class Board extends React.PureComponent {
         squares[this.state.selected] = null
 
         /* check if any match-5+ is found so that we clear them from board game and update score */
-        const resolved_idx = this.checkResolved(squares, active_idx_arr)
+        const resolved_idx = checkResolved(squares, active_idx_arr, { w: this.w, h: this.h })
         for (const ri of resolved_idx) {
             squares[ri] = null
         }
@@ -280,126 +243,7 @@ export default class Board extends React.PureComponent {
         // Ignore this click event
     }
 
-    /**
-     * Check for a match-5+
-     * 
-     * This function checks for squares surrounding the active indexes in *active_idx_arr*
-     * to see if a vertical/horizontal or diagonal line with 5+ items of the same color is form 
-     * 
-     * @param {*} curr_squares square array to check from
-     * @param {*} active_idx_arr array of all active indexes
-     * @returns array: all indexes of *squares* that involve in a match
-     */
-    checkResolved(curr_squares, active_idx_arr) {
-        let resolved = []
-
-        active_idx_arr.forEach(i => {
-            resolved = resolved
-                .concat(this.checkResolved_horizontal(curr_squares, i))
-                .concat(this.checkResolved_vertical(curr_squares, i, this.w))
-                .concat(this.checkResolved_diagonal(curr_squares, i, this.w))
-        })
-        return resolved
-    }
-
-    checkResolved_horizontal(squares, i) {
-
-        /* Check horizontal line [ i % w == 0 ] [ i % w == 1 ] ... [ i % w == w-1 ] */
-
-        let resolved = []
-        const line_wrap = this.lineWrapOfIndex(i)
-
-        // count forward
-        let countForward = []
-        for (let incr = i + 1; incr < line_wrap.end && SquareItem.isIdentical(squares[incr], squares[i]); incr++) {
-            countForward.push(incr)
-        }
-        // count backward
-        let countBackward = []
-        for (let decr = i - 1; decr >= line_wrap.start && SquareItem.isIdentical(squares[decr], squares[i]); decr--) {
-            countBackward.push(decr)
-        }
-        // total:
-        const count = countBackward.length + countForward.length + 1
-        if (count >= 5) {
-            resolved = [i].concat(countForward, countBackward)
-        }
-        return resolved
-    }
-
-    checkResolved_vertical(squares, i, w) {
-        /**
-        * Check vertical line
-        * [ i - w]
-        * [ i ]
-        * [ i + w]
-        */
-        let resolved = []
-        // count forward
-        let countForward = []
-        for (let incr = i + w; incr < squares.length && SquareItem.isIdentical(squares[incr], squares[i]); incr += w) {
-            countForward.push(incr)
-        }
-        // count backward
-        let countBackward = []
-        for (let decr = i - w; decr >= 0 && SquareItem.isIdentical(squares[decr], squares[i]); decr -= w) {
-            countBackward.push(decr)
-        }
-        // total:
-        const count = countBackward.length + countForward.length + 1
-        if (count >= 5) {
-            resolved = [i].concat(countForward, countBackward)
-        }
-        return resolved
-    }
-
-    checkResolved_diagonal(squares, i, w) {
-        let resolved = []
-        /**
-        * Check diagonal line 
-        * DIRECTION: \
-        */
-        {
-            // count forward
-            let countForward = []
-            for (let incr = i + w + 1; incr < squares.length && SquareItem.isIdentical(squares[incr], squares[i]); incr += (w + 1)) {
-                countForward.push(incr)
-            }
-            // count backward
-            let countBackward = []
-            for (let decr = i - w - 1; decr >= 0 && SquareItem.isIdentical(squares[decr], squares[i]); decr -= (w + 1)) {
-                countBackward.push(decr)
-            }
-            // total:
-            const count = countBackward.length + countForward.length + 1
-            if (count >= 5) {
-                resolved = resolved.concat([i], countForward, countBackward)
-            }
-        }
-
-        /**
-        * Check diagonal line 
-        * DIRECTION: /
-        */
-        {
-            // count forward
-            let countForward = []
-            for (let incr = i + w - 1; incr < squares.length && SquareItem.isIdentical(squares[incr], squares[i]); incr += (w - 1)) {
-                countForward.push(incr)
-            }
-            // count backward
-            let countBackward = []
-            for (let decr = i - w + 1; decr >= 0 && SquareItem.isIdentical(squares[decr], squares[i]); decr -= (w - 1)) {
-                countBackward.push(decr)
-            }
-            // total:
-            const count = countBackward.length + countForward.length + 1
-            if (count >= 5) {
-                resolved = resolved.concat([i], countForward, countBackward)
-            }
-        }
-        return resolved
-    }
+    // REACT-RENDER ===================================================================
 
     renderSquare(idx) {
         return <Square key={idx}
