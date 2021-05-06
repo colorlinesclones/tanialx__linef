@@ -1,12 +1,39 @@
+:root {
+  --square-size: 9vmin;
+}
+
 body {
   font: 14px "Century Gothic", Futura, sans-serif;
-  margin: 20px;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+}
+
+.game {
+  margin: auto;
+}
+
+.score-board {
+  margin-top: 4vmin;
+  margin-bottom: 2vmin;
+  font-size: calc(8px + 1vmin)
 }
 
 .game-board {
   display: grid;
+  margin: 0;
+  width: calc(var(--square-size) * 9 + 10px);
+  height: calc(var(--square-size) * 9 + 10px);
   grid-template-columns: repeat(9, 1fr);
-  grid-template-rows: repeat(9, 45px);
+  grid-template-rows: repeat(9, 1fr);
   row-gap: 1px;
   column-gap: 1px;
   background-color: #cccccc;
@@ -17,9 +44,10 @@ body {
   background: #ffffff;
   float: left;
   padding: 0;
+  margin: 0;
   text-align: center;
-  width: 45px;
-  height: 45px;
+  width: var(--square-size);
+  height: var(--square-size);
 }
 
 .square-active {
@@ -28,14 +56,4 @@ body {
 
 .square:hover {
   background: rgb(240, 240, 240);
-}
-
-.game {
-  display: flex;
-  flex-direction: row;
-}
-
-.score-board {
-  display: inline-block;
-  margin-bottom: 10px;
 }

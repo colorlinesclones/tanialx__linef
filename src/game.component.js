@@ -19,13 +19,11 @@ export default class Game extends React.PureComponent {
     render() {
         return (
             <div className="game">
-                <div>
-                    <div className="score-board">
-                        <span>Score: </span>
-                        <Score score={this.state.score} />
-                    </div>
-                    <Board w='9' h='9' score_incr={this.increaseScore} />
+                <div className="score-board">
+                    <span>Score: </span>
+                    <Score score={this.state.score} />
                 </div>
+                <Board w="9" h="9" score_incr={this.increaseScore} />
             </div>
         );
     }

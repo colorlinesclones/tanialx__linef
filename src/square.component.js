@@ -17,7 +17,7 @@ export default class Square extends React.PureComponent {
         if (this.props.item != null) {
             itemOrBlank = <Item x='22' y='22'
                 color={this.props.item.color}
-                r={this.props.item.type === 'p' ? 15 : 5} />
+                r={this.props.item.type === 'p' ? '30%' : '10%'} />
         }
         const style = this.props.isActivated ? 'square square-active' : 'square'
         return (
