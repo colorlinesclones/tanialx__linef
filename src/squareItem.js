@@ -11,7 +11,7 @@ export default class SquareItem {
      * @returns 
      */
     static copy(squareItem) {
-        return new SquareItem(squareItem.type, squareItem.color)
+        return squareItem ? new SquareItem(squareItem.type, squareItem.color) : null
     }
 
     /**
@@ -21,7 +21,6 @@ export default class SquareItem {
      * @returns 
      */
     static isIdentical(s1, s2) {
-        if (s1 === null && s2 === null) return true
         if (s1 === null || s2 === null) return false
         return s1.type === s2.type && s1.color === s2.color
     }

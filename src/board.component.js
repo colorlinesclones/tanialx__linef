@@ -165,36 +165,13 @@ export default class Board extends React.PureComponent {
         const squares = this.state.squares.slice();
 
         /*
-         * Resolve 'f' items:
+         * Resolve 'f' item:
          * - Extra check to see if we are moving the selected item to a square where a future item is
          * expected to be rendered
-         * - If yes, find another random square to render that 'f' item as 'p' 
+         * - If yes, we have to find another random square to render that 'f' item as 'p' 
          */
-        if (squares[i] && squares[i].isFutureItem()) {
-            random_free_square_index = random_indexes_in_array(this.noRandomF + 1, squares, this.isSquareFree, [i, this.state.selected])
-            const switch_to_idx = random_free_square_index.pop()
-            squares[switch_to_idx] = this.newPresentItem(squares[i].color)
-
-            // f -> p: add ref to active_idx_arr
-            active_idx_arr.push(switch_to_idx)
-
-            // remove this index from 'idx_of_f_items' array
-            idx_of_f_items.splice(idx_of_f_items.indexOf(i), 1)
-        } else {
-            random_free_square_index = random_indexes_in_array(this.noRandomF, squares, this.isSquareFree, [i, this.state.selected])
-        }
-
-        /* For all other f-items with no conflict, render full-size now */
-        idx_of_f_items.forEach(idx => {
-            squares[idx] = this.newPresentItem(squares[idx].color)
-            // f -> p: add ref to active_idx_arr
-            active_idx_arr.push(idx)
-        })
-
-        // Create new 'f' (future) items (small items) at some random positions
-        for (let i = 0; i < this.noRandomF; i++) {
-            squares[random_free_square_index.pop()] = this.newFutureItem()
-        }
+        const isFutureItemAt_i = squares[i] && squares[i].isFutureItem()
+        const itemAt_i = SquareItem.copy(squares[i])
 
         /* update move-to position with properties of selected item */
         squares[i] = SquareItem.copy(squares[this.state.selected])
@@ -202,10 +179,64 @@ export default class Board extends React.PureComponent {
         /* remove selected item from its previous position */
         squares[this.state.selected] = null
 
-        /* check if any match-5+ is found so that we clear them from board game and update score */
-        const resolved_idx = checkResolved(squares, active_idx_arr, { w: this.w, h: this.h })
-        for (const ri of resolved_idx) {
-            squares[ri] = null
+        /* Check if any match-5+ is found. 
+         *
+         * If no match-5+ is found, small items should grow to full-size
+         * (this will result in new active indexes, so we need to check for match-5 again after that)
+         */
+        let resolved_idx = checkResolved(squares, active_idx_arr, { w: this.w, h: this.h })
+
+        if (resolved_idx.length === 0) { // No match-5+ found
+
+            // Reset active indexes array since there's no match-5 found for those indexes during previous check
+            // This array is going to be filled with position in which f-items grow to p-items
+            active_idx_arr = []
+
+            if (isFutureItemAt_i) { 
+                /*
+                 * if this is originally where an f-item is, but is then occupied by the moved item
+                 * - select a new position for the f-item
+                 * - replace item-move-to index from 'idx_of_f_items' array with the new random position,
+                 *   so that it is rendered full-size later on together with other current f-items
+                 */
+                random_free_square_index = random_indexes_in_array(this.noRandomF + 1, squares, this.isSquareFree, [i])
+                const switch_to_idx = random_free_square_index.pop()
+                squares[switch_to_idx] = itemAt_i
+    
+                idx_of_f_items.splice(idx_of_f_items.indexOf(i), 1)
+                idx_of_f_items.push(switch_to_idx)
+            } else {
+                random_free_square_index = random_indexes_in_array(this.noRandomF, squares, this.isSquareFree, [i])
+            }
+
+            // render full-size all f-items now
+            idx_of_f_items.forEach(idx => {
+                squares[idx] = this.newPresentItem(squares[idx].color)
+                // f -> p: add ref to active_idx_arr
+                active_idx_arr.push(idx)
+            })
+
+            // Create new 'f' (future) items (small items) at some random positions
+            for (let i = 0; i < this.noRandomF; i++) {
+                squares[random_free_square_index.pop()] = this.newFutureItem()
+            }
+
+            /* again, check if any match-5+ is found */
+            resolved_idx = checkResolved(squares, active_idx_arr, { w: this.w, h: this.h })
+            for (const ri of resolved_idx) {
+                squares[ri] = null
+            }
+        } else { 
+            
+            // Some match-5+ found -> no new item pops up (f-items state unchanged)
+            // clear all cell involved in the match-5+ (except for the f-item at move-to position, if any)
+
+            for (const ri of resolved_idx) {
+                squares[ri] = null
+            }
+            if (isFutureItemAt_i) {
+                squares[i] = itemAt_i
+            }
         }
 
         /* signal react to re-render board */
