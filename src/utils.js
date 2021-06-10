@@ -18,13 +18,13 @@ export function random_indexes_in_array(noOfRandom, arr, filter, exclude) {
      * input func (conditionFunc => true/false) is used to decide whether the index is valid
      */
     let fs = arr.reduce((acc, curr, index) => {
-        if (curr === null && filter(index) && !exclude.includes(index)) {
+        if (curr === null && filter(arr, index) && !exclude.includes(index)) {
             acc.push(index);
         }
         return acc;
     }, []);
 
-    for (let i = 0; i < noOfRandom; i++) {
+    for (let i = 0; i < noOfRandom && fs.length > 0; i++) {
 
         // 1. Pick a random index fs_idx of free squares ('fs')
         // 2. fs[fs_idx] = corresponding index of 'squares' where there's no item occupied (value to return)

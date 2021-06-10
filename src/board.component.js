@@ -18,7 +18,6 @@ export default class Board extends React.PureComponent {
             selected: null
         };
         this.onSquareSelected = this.onSquareSelected.bind(this)
-        this.isSquareFree = this.isSquareFree.bind(this)
         this.validNeighborIndex = this.validNeighborIndex.bind(this)
     }
 
@@ -91,11 +90,11 @@ export default class Board extends React.PureComponent {
         if (check_idx_r < line_wrap.end) valid_check_idx.push(check_idx_r)
         if (check_idx_d < this.w * this.h) valid_check_idx.push(check_idx_d)
 
-        return valid_check_idx.filter(v_idx => this.isSquareFree(v_idx))
+        return valid_check_idx.filter(v_idx => this.isSquareFree(this.state.squares, v_idx))
     }
 
-    isSquareFree(idx) {
-        return this.state.squares[idx] === null || this.state.squares[idx].isFree()
+    isSquareFree(square, idx) {
+        return square[idx] === null || square[idx].isFree()
     }
 
     // CLICK-EVENT ===================================================================
@@ -217,7 +216,7 @@ export default class Board extends React.PureComponent {
             })
 
             // Create new 'f' (future) items (small items) at some random positions
-            for (let i = 0; i < this.noRandomF; i++) {
+            for (let i = 0; i < this.noRandomF && random_free_square_index.length > 0; i++) {
                 squares[random_free_square_index.pop()] = this.newFutureItem()
             }
 
