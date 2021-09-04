@@ -4,9 +4,9 @@
 ![stability-wip](https://img.shields.io/badge/stability-wip-yellow.svg?style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/tanialx/linef?color=blue&style=flat-square)
 
-A remake of classic line-98 (color lines), a popular game in late 90s and early 00s
+A remake of classic line-98 aka [Color Lines](https://de.wikipedia.org/wiki/Color_Lines) - *a puzzle video game invented by Oleg Dëmin and first presented by the Russian company Gamos in 1992*
 
-Play [linef](https://tanialx.github.io/linef/)
+[Play](https://tanialx.github.io/linef/)
 
 ### Game rule
 
